@@ -32,7 +32,7 @@ export default async function DashboardPage() {
     <div>
       <PageHeader
         title={`Bonjour, ${user?.name?.split(" ")[0] ?? ""}`}
-        description="Vue d'ensemble de la mini-bibliothèque Annales Facobly."
+        description="Vue d'ensemble de la mini-bibliothèque du Lycée Moderne Facobly."
         action={
           <div className="flex gap-2">
             <Button render={<Link href="/scan" />} variant="outline">

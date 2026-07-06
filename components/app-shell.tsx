@@ -57,8 +57,8 @@ function Brand() {
         <BookMarked className="size-5" />
       </div>
       <div className="leading-tight">
-        <p className="text-sm font-bold text-foreground">Annales Facobly</p>
-        <p className="text-xs text-muted-foreground">Mini-bibliothèque</p>
+        <p className="text-sm font-bold text-foreground">Eblon Mini Biblio LMF</p>
+        <p className="text-xs text-muted-foreground">Lycée Moderne Facobly</p>
       </div>
     </div>
   )

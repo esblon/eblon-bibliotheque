@@ -25,7 +25,7 @@ export default async function EleveDetailPage({
       <EleveDetail
         eleve={eleve}
         emprunts={emprunts}
-        etablissement={etablissement || "Bibliothèque Annales Facobly"}
+        etablissement={etablissement || "Lycée Moderne Facobly"}
       />
     </div>
   )

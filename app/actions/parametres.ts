@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache"
 
 const DEFAULTS: Record<string, string> = {
   duree_pret_jours: "7",
-  nom_etablissement: "Bibliothèque Annales Facobly",
+  nom_etablissement: "Lycée Moderne Facobly",
   nom_professeur: "Professeur référent",
 }
 
