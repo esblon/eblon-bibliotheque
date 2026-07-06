@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -85,11 +86,15 @@ export function ExportButtons() {
         Exporter
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Export CSV / Excel</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => run("livres")}>Livres</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run("eleves")}>Élèves</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => run("emprunts")}>Emprunts</DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>Export CSV / Excel</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => run("livres")}>Livres</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run("eleves")}>Élèves</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => run("emprunts")}>
+            Emprunts
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   )
