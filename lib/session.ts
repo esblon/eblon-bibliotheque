@@ -33,3 +33,8 @@ export async function requireAdmin(): Promise<SessionUser> {
   if (user.role !== "admin") throw new Error("Forbidden: admin only")
   return user
 }
+
+export async function getRole(): Promise<string> {
+  const user = await getSessionUser()
+  return user?.role ?? "prof"
+}
