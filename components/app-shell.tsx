@@ -124,10 +124,10 @@ export function AppShell({
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-sidebar px-4 md:hidden">
         <Brand />
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Ouvrir le menu">
-              <Menu className="size-5" />
-            </Button>
+          <SheetTrigger
+            render={<Button variant="ghost" size="icon" aria-label="Ouvrir le menu" />}
+          >
+            <Menu className="size-5" />
           </SheetTrigger>
           <SheetContent side="left" className="w-72 p-0">
             <SheetTitle className="sr-only">Menu de navigation</SheetTitle>

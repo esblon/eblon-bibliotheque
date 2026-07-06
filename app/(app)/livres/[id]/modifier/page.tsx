@@ -20,11 +20,14 @@ export default async function ModifierLivrePage({
 
   return (
     <div>
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
-        <Link href={`/livres/${livreId}`}>
-          <ArrowLeft className="size-4" />
-          Retour à la fiche
-        </Link>
+      <Button
+        render={<Link href={`/livres/${livreId}`} />}
+        variant="ghost"
+        size="sm"
+        className="mb-4 -ml-2"
+      >
+        <ArrowLeft className="size-4" />
+        Retour à la fiche
       </Button>
       <PageHeader title="Modifier le livre" />
       <LivreForm

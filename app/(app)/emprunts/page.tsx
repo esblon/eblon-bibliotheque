@@ -18,11 +18,9 @@ export default async function EmpruntsPage() {
         title="Emprunts"
         description="Tous les emprunts, en cours et passés."
         action={
-          <Button asChild size="lg">
-            <Link href="/emprunts/nouveau">
-              <Plus className="mr-2 size-4" />
-              Nouveau prêt
-            </Link>
+          <Button render={<Link href="/emprunts/nouveau" />} size="lg">
+            <Plus className="mr-2 size-4" />
+            Nouveau prêt
           </Button>
         }
       />

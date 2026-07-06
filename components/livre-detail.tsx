@@ -136,18 +136,23 @@ export function LivreDetail({
 
           <div className="flex flex-wrap gap-2">
             {livre.statut === "Disponible" && (
-              <Button asChild size="sm">
-                <Link href={`/emprunts/nouveau?code=${livre.codeLivre}`}>
-                  <ArrowLeftRight className="size-4" />
-                  Prêter ce livre
-                </Link>
+              <Button
+                render={
+                  <Link href={`/emprunts/nouveau?code=${livre.codeLivre}`} />
+                }
+                size="sm"
+              >
+                <ArrowLeftRight className="size-4" />
+                Prêter ce livre
               </Button>
             )}
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/livres/${livre.id}/modifier`}>
-                <Pencil className="size-4" />
-                Modifier
-              </Link>
+            <Button
+              render={<Link href={`/livres/${livre.id}/modifier`} />}
+              variant="outline"
+              size="sm"
+            >
+              <Pencil className="size-4" />
+              Modifier
             </Button>
 
             <SignalDialog
@@ -170,11 +175,17 @@ export function LivreDetail({
 
             {isAdmin && (
               <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="text-destructive">
-                    <Trash2 className="size-4" />
-                    Supprimer
-                  </Button>
+                <DialogTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive"
+                    />
+                  }
+                >
+                  <Trash2 className="size-4" />
+                  Supprimer
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -185,8 +196,8 @@ export function LivreDetail({
                     Elle est irréversible.
                   </p>
                   <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Annuler</Button>
+                    <DialogClose render={<Button variant="outline" />}>
+                      Annuler
                     </DialogClose>
                     <Button
                       variant="destructive"
@@ -286,11 +297,9 @@ function SignalDialog({
   const [comment, setComment] = useState("")
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <AlertTriangle className="size-4" />
-          Signaler
-        </Button>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+        <AlertTriangle className="size-4" />
+        Signaler
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -304,20 +313,23 @@ function SignalDialog({
         />
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           {["Perdu", "Abîmé", "Retiré"].map((s) => (
-            <DialogClose asChild key={s}>
-              <Button
-                variant="outline"
-                disabled={busy}
-                className="w-full"
-                onClick={() =>
-                  onDone(
-                    () => signalerLivre(livreId, s, comment),
-                    `Livre signalé : ${s}.`,
-                  )
-                }
-              >
-                Marquer comme {s}
-              </Button>
+            <DialogClose
+              key={s}
+              render={
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  className="w-full"
+                  onClick={() =>
+                    onDone(
+                      () => signalerLivre(livreId, s, comment),
+                      `Livre signalé : ${s}.`,
+                    )
+                  }
+                />
+              }
+            >
+              Marquer comme {s}
             </DialogClose>
           ))}
         </DialogFooter>

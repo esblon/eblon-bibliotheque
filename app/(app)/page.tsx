@@ -35,17 +35,13 @@ export default async function DashboardPage() {
         description="Vue d'ensemble de la mini-bibliothèque Annales Facobly."
         action={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href="/scan">
-                <ScanLine className="size-4" />
-                Scanner
-              </Link>
+            <Button render={<Link href="/scan" />} variant="outline">
+              <ScanLine className="size-4" />
+              Scanner
             </Button>
-            <Button asChild>
-              <Link href="/emprunts/nouveau">
-                <Plus className="size-4" />
-                Nouveau prêt
-              </Link>
+            <Button render={<Link href="/emprunts/nouveau" />}>
+              <Plus className="size-4" />
+              Nouveau prêt
             </Button>
           </div>
         }
@@ -138,8 +134,8 @@ export default async function DashboardPage() {
           <h2 className="text-base font-semibold text-foreground">
             Derniers mouvements
           </h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/emprunts">Tout voir</Link>
+          <Button render={<Link href="/emprunts" />} variant="ghost" size="sm">
+            Tout voir
           </Button>
         </div>
         {recent.length === 0 ? (

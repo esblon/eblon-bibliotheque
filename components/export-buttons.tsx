@@ -80,11 +80,9 @@ export function ExportButtons() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={busy}>
-          <Download className="mr-2 size-4" />
-          Exporter
-        </Button>
+      <DropdownMenuTrigger render={<Button variant="outline" disabled={busy} />}>
+        <Download className="mr-2 size-4" />
+        Exporter
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Export CSV / Excel</DropdownMenuLabel>

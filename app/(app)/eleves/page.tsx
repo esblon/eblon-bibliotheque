@@ -15,11 +15,9 @@ export default async function ElevesPage() {
         title="Élèves"
         description="Gérez les élèves inscrits à la bibliothèque."
         action={
-          <Button asChild size="lg">
-            <Link href="/eleves/nouveau">
-              <Plus className="mr-2 size-4" />
-              Ajouter un élève
-            </Link>
+          <Button render={<Link href="/eleves/nouveau" />} size="lg">
+            <Plus className="mr-2 size-4" />
+            Ajouter un élève
           </Button>
         }
       />

@@ -15,17 +15,13 @@ export default async function LivresPage() {
         description="Gérez le catalogue des annales et manuels."
         action={
           <div className="flex gap-2">
-            <Button asChild variant="outline">
-              <Link href="/livres/qr-codes">
-                <QrCode className="size-4" />
-                QR codes
-              </Link>
+            <Button render={<Link href="/livres/qr-codes" />} variant="outline">
+              <QrCode className="size-4" />
+              QR codes
             </Button>
-            <Button asChild>
-              <Link href="/livres/nouveau">
-                <Plus className="size-4" />
-                Ajouter
-              </Link>
+            <Button render={<Link href="/livres/nouveau" />}>
+              <Plus className="size-4" />
+              Ajouter
             </Button>
           </div>
         }

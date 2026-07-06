@@ -25,11 +25,14 @@ export default async function LivrePage({
 
   return (
     <div>
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2">
-        <Link href="/livres">
-          <ArrowLeft className="size-4" />
-          Retour aux livres
-        </Link>
+      <Button
+        render={<Link href="/livres" />}
+        variant="ghost"
+        size="sm"
+        className="mb-4 -ml-2"
+      >
+        <ArrowLeft className="size-4" />
+        Retour aux livres
       </Button>
       <LivreDetail
         livre={livre}

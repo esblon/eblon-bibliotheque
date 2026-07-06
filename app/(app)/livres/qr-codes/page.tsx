@@ -10,11 +10,14 @@ export default async function QrCodesPage() {
 
   return (
     <div>
-      <Button asChild variant="ghost" size="sm" className="mb-4 -ml-2 print:hidden">
-        <Link href="/livres">
-          <ArrowLeft className="size-4" />
-          Retour aux livres
-        </Link>
+      <Button
+        render={<Link href="/livres" />}
+        variant="ghost"
+        size="sm"
+        className="mb-4 -ml-2 print:hidden"
+      >
+        <ArrowLeft className="size-4" />
+        Retour aux livres
       </Button>
       <div className="print:hidden">
         <PageHeader

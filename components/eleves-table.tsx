@@ -87,7 +87,9 @@ export function ElevesTable({ eleves, isAdmin }: { eleves: Eleve[]; isAdmin: boo
         </div>
         <Select value={niveau} onValueChange={setNiveau}>
           <SelectTrigger className="sm:w-48">
-            <SelectValue />
+            <SelectValue>
+              {(v) => (v === "Tous" ? "Tous les niveaux" : (v as string))}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Tous">Tous les niveaux</SelectItem>
@@ -145,24 +147,24 @@ export function ElevesTable({ eleves, isAdmin }: { eleves: Eleve[]; isAdmin: boo
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="size-8">
-                        <MoreHorizontal className="size-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button variant="ghost" size="icon" className="size-8" />
+                      }
+                    >
+                      <MoreHorizontal className="size-4" />
+                      <span className="sr-only">Actions</span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/eleves/${e.id}`}>
-                          <History className="mr-2 size-4" />
-                          Historique
-                        </Link>
+                      <DropdownMenuItem render={<Link href={`/eleves/${e.id}`} />}>
+                        <History className="mr-2 size-4" />
+                        Historique
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/eleves/${e.id}/modifier`}>
-                          <Pencil className="mr-2 size-4" />
-                          Modifier
-                        </Link>
+                      <DropdownMenuItem
+                        render={<Link href={`/eleves/${e.id}/modifier`} />}
+                      >
+                        <Pencil className="mr-2 size-4" />
+                        Modifier
                       </DropdownMenuItem>
                       {isAdmin && (
                         <DropdownMenuItem onClick={() => onArchive(e.id)} className="text-destructive">

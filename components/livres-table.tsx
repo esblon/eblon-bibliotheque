@@ -177,8 +177,12 @@ export function LivresTable({ livres }: { livres: Livre[] }) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/livres/${l.id}`}>Ouvrir</Link>
+                      <Button
+                        render={<Link href={`/livres/${l.id}`} />}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Ouvrir
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -206,7 +210,9 @@ function FilterSelect({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        <SelectValue placeholder={placeholder}>
+          {(v) => (v === ALL ? `${placeholder} : tous` : (v as string))}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={ALL}>{placeholder} : tous</SelectItem>

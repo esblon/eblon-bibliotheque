@@ -83,11 +83,12 @@ export function EleveDetail({
               <p className="rounded-md bg-muted p-3 text-muted-foreground">{eleve.commentaire}</p>
             )}
             <div className="flex flex-col gap-2 pt-2">
-              <Button asChild variant="outline">
-                <Link href={`/eleves/${eleve.id}/modifier`}>
-                  <Pencil className="mr-2 size-4" />
-                  Modifier
-                </Link>
+              <Button
+                render={<Link href={`/eleves/${eleve.id}/modifier`} />}
+                variant="outline"
+              >
+                <Pencil className="mr-2 size-4" />
+                Modifier
               </Button>
               {eleve.telephoneParent && retards.length > 0 && (
                 <Button onClick={relancer} className="bg-accent text-accent-foreground hover:bg-accent/90">
