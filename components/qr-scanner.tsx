@@ -25,20 +25,36 @@ export function QrScanner({ onScan }: { onScan: (text: string) => void }) {
 
   async function start() {
     setError(null)
+    // The video region must be visible and laid out BEFORE starting the camera.
+    // On iOS Safari, html5-qrcode cannot attach the stream to a hidden /
+    // zero-size container, which shows an authorized-but-blank camera.
+    setActive(true)
+    // Wait two animation frames so the container has real dimensions.
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve(null))),
+    )
     try {
       const scanner = new Html5Qrcode(containerId)
       scannerRef.current = scanner
       await scanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 220, height: 220 } },
+        {
+          fps: 10,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const size = Math.floor(
+              Math.min(viewfinderWidth, viewfinderHeight) * 0.8,
+            )
+            return { width: size, height: size }
+          },
+        },
         (decoded) => {
           onScan(decoded.trim())
           stop()
         },
         () => {},
       )
-      setActive(true)
     } catch (err) {
+      setActive(false)
       setError(
         "Impossible d'accéder à la caméra. Vérifiez les autorisations ou saisissez le code manuellement.",
       )
