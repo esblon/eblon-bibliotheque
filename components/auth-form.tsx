@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { BookMarked } from "lucide-react"
+import { InstallApp } from "@/components/install-app"
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter()
@@ -147,6 +148,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           </Link>
         </p>
       </Card>
+
+      <InstallApp />
     </main>
   )
 }
