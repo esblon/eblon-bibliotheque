@@ -22,7 +22,26 @@ export async function getEleves(search?: string) {
     )
   }
   return db
-    .select()
+    .select({
+      id: eleves.id,
+      identifiantEleve: eleves.identifiantEleve,
+      nom: eleves.nom,
+      prenom: eleves.prenom,
+      classe: eleves.classe,
+      niveau: eleves.niveau,
+      etablissement: eleves.etablissement,
+      telephoneParent: eleves.telephoneParent,
+      statut: eleves.statut,
+      commentaire: eleves.commentaire,
+      archived: eleves.archived,
+      createdAt: eleves.createdAt,
+      updatedAt: eleves.updatedAt,
+      empruntsEnCours: sql<number>`(
+        select count(*)::int from ${emprunts}
+        where ${emprunts.eleveId} = ${eleves.id}
+        and ${emprunts.statut} in ('En cours', 'En retard')
+      )`,
+    })
     .from(eleves)
     .where(and(...conditions))
     .orderBy(desc(eleves.createdAt))

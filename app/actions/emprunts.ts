@@ -143,6 +143,7 @@ export async function createEmprunt(input: {
   )
   revalidatePath("/emprunts")
   revalidatePath("/livres")
+  revalidatePath("/eleves")
   revalidatePath("/")
   return { data: row }
 }
@@ -188,6 +189,7 @@ export async function retournerEmprunt(input: {
   revalidatePath("/emprunts")
   revalidatePath("/retards")
   revalidatePath("/livres")
+  revalidatePath("/eleves")
   revalidatePath("/")
   return { data: true }
 }
