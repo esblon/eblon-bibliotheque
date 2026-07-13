@@ -3,6 +3,7 @@ import { pool } from "@/lib/db"
 import { db } from "@/lib/db"
 import { user as userTable } from "@/lib/db/schema"
 import { sql } from "drizzle-orm"
+import { sendResetPasswordEmail } from "@/lib/email"
 
 export const auth = betterAuth({
   database: pool,
@@ -31,6 +32,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendResetPasswordEmail(user.email, url)
+    },
+    resetPasswordTokenExpiresIn: 60 * 60, // 1 heure
   },
   user: {
     additionalFields: {

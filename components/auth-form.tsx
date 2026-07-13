@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
@@ -19,8 +19,14 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState(false)
 
   const isSignUp = mode === "sign-up"
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("reset") === "success") setResetSuccess(true)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,6 +89,15 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           </p>
         </div>
 
+        {resetSuccess && !isSignUp && (
+          <div
+            className="mb-4 rounded-lg border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-foreground"
+            role="status"
+          >
+            Mot de passe réinitialisé. Vous pouvez maintenant vous connecter.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {isSignUp && (
             <div className="flex flex-col gap-2">
@@ -110,7 +125,17 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Mot de passe</Label>
+              {!isSignUp && (
+                <Link
+                  href="/mot-de-passe-oublie"
+                  className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              )}
+            </div>
             <Input
               id="password"
               type="password"
