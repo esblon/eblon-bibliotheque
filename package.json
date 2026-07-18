@@ -10,6 +10,8 @@
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
+        "db:seed": "tsx --env-file=.env scripts/seed-database.ts",
+        "db:tables": "tsx --env-file=.env scripts/list-tables.ts",
         "db:verify": "tsx --env-file=.env scripts/verify-database.ts"
     },
     "dependencies": {
