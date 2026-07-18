@@ -42,9 +42,95 @@ pnpm test
 pnpm build
 ```
 
-Les migrations sont explicites et versionnées dans `migrations/`. Aucune table n'est créée automatiquement au démarrage. La première migration crée uniquement le schéma configuré et la table technique `foundation_status`.
+Les migrations sont explicites et versionnées dans `migrations/`. Aucune table n'est créée automatiquement au démarrage. La table technique initiale est désormais nommée `statut_fondation`.
 
-Les commandes `pnpm db:migrate` et `pnpm db:verify` chargent automatiquement le fichier `.env`. Les métadonnées de migration sont isolées dans `<DATABASE_SCHEMA>.pgmigrations`, soit `eblon_bibliotheque.pgmigrations` avec la configuration par défaut.
+Les commandes `pnpm db:migrate` et `pnpm db:verify` chargent automatiquement le fichier `.env`. Les métadonnées sont isolées dans `<DATABASE_SCHEMA>.migrations_eblon_bibliotheque`. Le lanceur renomme de manière transactionnelle l'ancienne table `pgmigrations` lorsqu'elle existe et refuse de poursuivre si deux historiques concurrents sont détectés.
+
+## Modèle métier PostgreSQL
+
+Toutes les tables métier utilisent des UUID et appartiennent au schéma défini par `DATABASE_SCHEMA`. Les identifiants PostgreSQL applicatifs sont en français, ASCII et `snake_case`. Le modèle distingue l'ouvrage intellectuel (`ouvrages`) de chaque exemplaire physique (`exemplaires`). Les événements de prêt sont conservés dans un journal immuable.
+
+```text
+matieres ────────────────┐
+                         ├── ouvrages ── exemplaires ── emprunts ── evenements_emprunt
+niveaux_scolaires ───────┘                              │             │
+        │                                               │             │
+        └── emprunteurs ────────────────────────────────┘             │
+                                                                      │
+agents ── agent_preteur / agent_recepteur / agent_id ─────────────────┘
+```
+
+Tables métier :
+
+- `matieres` et `niveaux_scolaires` : référentiels configurables ;
+- `ouvrages` : descriptions bibliographiques ;
+- `exemplaires` : inventaire physique, QR codes et états ;
+- `emprunteurs` : élèves et autres emprunteurs ;
+- `agents` : responsables, sans mot de passe local ;
+- `emprunts` : prêts actifs et historique des retours ;
+- `evenements_emprunt` : journal append-only des événements.
+
+Correspondance de la migration `000004_renommage_modele_francais` :
+
+| Ancien nom | Nouveau nom |
+|---|---|
+| `subjects` | `matieres` |
+| `education_levels` | `niveaux_scolaires` |
+| `books` | `ouvrages` |
+| `book_copies` | `exemplaires` |
+| `borrowers` | `emprunteurs` |
+| `staff_members` | `agents` |
+| `loans` | `emprunts` |
+| `loan_events` | `evenements_emprunt` |
+| `foundation_status` | `statut_fondation` |
+
+Valeurs métier : exemplaires `PREVU`, `ACHETE`, `A_ETIQUETER`, `ETIQUETE`, `DISPONIBLE`, `EMPRUNTE`, `PERDU`, `ABIME`, `RETIRE` ; emprunteurs `ACTIF`, `SUSPENDU`, `ARCHIVE` ; agents `ACTIF`, `DESACTIVE` et rôles `ADMIN`, `ENSEIGNANT`, `BIBLIOTHECAIRE`, `LECTEUR` ; emprunts `ACTIF`, `RETOURNE`, `EN_RETARD`, `PERDU`, `ANNULE` ; événements `CREE`, `PROLONGE`, `RETOURNE`, `MARQUE_EN_RETARD`, `MARQUE_PERDU`, `ANNULE`, `NOTE_AJOUTEE`.
+
+Les migrations `000001` à `000003`, déjà exécutées, sont immuables. Le retour arrière de la migration de renommage doit être testé sur une sauvegarde ou un schéma temporaire, puis exécuté explicitement depuis la racine du dépôt :
+
+```powershell
+pnpm exec node-pg-migrate down --envPath .env --migrations-dir migrations `
+  --migrations-table migrations_eblon_bibliotheque `
+  --migrations-schema eblon_bibliotheque --schema eblon_bibliotheque `
+  --migration-file-language ts
+```
+
+Cette commande revient d'une seule migration. Vérifier `DATABASE_SCHEMA` avant toute exécution et ne jamais modifier un ancien fichier de migration pour simuler un rollback.
+
+Commandes de base de données :
+
+```powershell
+pnpm db:migrate
+pnpm db:seed
+pnpm db:tables
+pnpm db:verify
+pnpm test
+```
+
+Le seed contient uniquement des données fictives préfixées `DEV-` et peut être relancé sans créer de doublons. Les tests d'intégration PostgreSQL utilisent des transactions annulées après chaque test et ne modifient pas les données locales existantes.
+
+## Réinitialisation locale contrôlée
+
+Pour appliquer normalement les nouvelles migrations sans perdre les données :
+
+```powershell
+docker compose up -d
+pnpm db:migrate
+pnpm db:seed
+pnpm db:verify
+```
+
+Pour recréer volontairement une base de développement vide :
+
+```powershell
+docker compose down -v
+docker compose up -d
+pnpm db:migrate
+pnpm db:seed
+pnpm db:verify
+```
+
+**Attention : `docker compose down -v` supprime définitivement le volume PostgreSQL local et toutes ses données. Ne jamais utiliser cette commande pour un environnement contenant des données à conserver.**
 
 ## Arrêt
 
