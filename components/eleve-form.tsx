@@ -126,7 +126,7 @@ export function EleveForm({ eleve }: { eleve?: EleveInput }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label>Niveau</Label>
-          <Select value={form.niveau} onValueChange={(v) => set("niveau", v)}>
+          <Select value={form.niveau} onValueChange={(v) => v && set("niveau", v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -141,7 +141,7 @@ export function EleveForm({ eleve }: { eleve?: EleveInput }) {
         </div>
         <div className="grid gap-2">
           <Label>Statut</Label>
-          <Select value={form.statut} onValueChange={(v) => set("statut", v)}>
+          <Select value={form.statut} onValueChange={(v) => v && set("statut", v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

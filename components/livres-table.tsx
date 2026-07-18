@@ -208,7 +208,7 @@ function FilterSelect({
   options: string[]
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value} onValueChange={(value) => value && onChange(value)}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder}>
           {(v) => (v === ALL ? `${placeholder} : tous` : (v as string))}

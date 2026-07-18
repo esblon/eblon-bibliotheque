@@ -1,4 +1,3 @@
-import { Analytics } from "@vercel/analytics/next"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { Toaster } from "@/components/ui/sonner"
@@ -11,7 +10,7 @@ export const metadata: Metadata = {
   title: "Eblon Mini Biblio LMF — Lycée Moderne Facobly",
   description:
     "Gestion des livres, élèves, prêts et retours de la mini-bibliothèque d'annales scolaires du Lycée Moderne Facobly, avec QR codes et statistiques.",
-  generator: "v0.app",
+  generator: "Next.js",
 }
 
 export const viewport: Viewport = {
@@ -32,7 +31,6 @@ export default function RootLayout({
         {children}
         <PwaRegister />
         <Toaster position="top-center" richColors />
-        {process.env.NODE_ENV === "production" && <Analytics />}
       </body>
     </html>
   )

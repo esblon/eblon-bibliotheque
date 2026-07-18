@@ -85,7 +85,7 @@ export function ElevesTable({ eleves, isAdmin }: { eleves: Eleve[]; isAdmin: boo
             className="pl-9"
           />
         </div>
-        <Select value={niveau} onValueChange={setNiveau}>
+        <Select value={niveau} onValueChange={(value) => value && setNiveau(value)}>
           <SelectTrigger className="sm:w-48">
             <SelectValue>
               {(v) => (v === "Tous" ? "Tous les niveaux" : (v as string))}

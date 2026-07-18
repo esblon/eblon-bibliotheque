@@ -94,7 +94,7 @@ export function EmpruntsTable({
               className="pl-9"
             />
           </div>
-          <Select value={statut} onValueChange={setStatut}>
+          <Select value={statut} onValueChange={(value) => value && setStatut(value)}>
             <SelectTrigger className="sm:w-48">
               <SelectValue />
             </SelectTrigger>

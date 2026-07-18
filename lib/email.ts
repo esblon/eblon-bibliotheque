@@ -1,13 +1,12 @@
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 // Without a verified domain, Resend only allows sending from this address.
 // Once a domain is verified in Resend, change this to e.g.
 // "Eblon Mini Biblio LMF <no-reply@votre-domaine.com>".
 const FROM = "Eblon Mini Biblio LMF <onboarding@resend.dev>"
 
 export async function sendResetPasswordEmail(to: string, resetUrl: string) {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const { error } = await resend.emails.send({
     from: FROM,
     to,
@@ -32,7 +31,7 @@ export async function sendResetPasswordEmail(to: string, resetUrl: string) {
   })
 
   if (error) {
-    console.log("[v0] Resend error:", error)
+    console.error("Resend error:", error)
     throw new Error("Échec de l'envoi de l'email de réinitialisation.")
   }
 }

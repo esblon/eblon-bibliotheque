@@ -108,7 +108,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="Niveau">
             <Select
               value={form.niveau}
-              onValueChange={(v) => set("niveau", v)}
+              onValueChange={(v) => v && set("niveau", v)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -126,7 +126,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="Matière">
             <Select
               value={form.matiere}
-              onValueChange={(v) => set("matiere", v)}
+              onValueChange={(v) => v && set("matiere", v)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -144,7 +144,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="Type">
             <Select
               value={form.typeLivre}
-              onValueChange={(v) => set("typeLivre", v)}
+              onValueChange={(v) => v && set("typeLivre", v)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -170,7 +170,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="État physique">
             <Select
               value={form.etatPhysique}
-              onValueChange={(v) => set("etatPhysique", v)}
+              onValueChange={(v) => v && set("etatPhysique", v)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -188,7 +188,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="Statut">
             <Select
               value={form.statut}
-              onValueChange={(v) => set("statut", v)}
+              onValueChange={(v) => v && set("statut", v)}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -206,7 +206,7 @@ export function LivreForm({ livre }: { livre?: LivreDefaults }) {
           <Field label="Localisation">
             <Select
               value={form.localisation}
-              onValueChange={(v) => set("localisation", v)}
+              onValueChange={(v) => v && set("localisation", v)}
             >
               <SelectTrigger>
                 <SelectValue />
