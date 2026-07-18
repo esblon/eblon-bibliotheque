@@ -5,7 +5,7 @@ import { livres, emprunts, eleves } from "@/lib/db/schema"
 import { requireUser, requireAdmin } from "@/lib/session"
 import { logAction } from "@/lib/history"
 import { NIVEAU_CODES, MATIERE_CODES } from "@/lib/constants"
-import { and, eq, ilike, or, desc, sql, ne } from "drizzle-orm"
+import { and, eq, ilike, or, desc, ne } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export type LivreFilters = {

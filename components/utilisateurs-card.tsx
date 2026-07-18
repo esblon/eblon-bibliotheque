@@ -91,7 +91,7 @@ export function UtilisateursCard({
                           {u.role === "admin" ? "Administrateur" : "Professeur"}
                         </Badge>
                       ) : (
-                        <Select value={u.role} onValueChange={(v) => changeRole(u.id, v)}>
+                        <Select value={u.role} onValueChange={(v) => v && changeRole(u.id, v)}>
                           <SelectTrigger className="w-40">
                             <SelectValue />
                           </SelectTrigger>

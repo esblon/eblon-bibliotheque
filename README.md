@@ -1,33 +1,76 @@
-# eblon-bibliotheque
+# EBLON BIBLIOTHÈQUE
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+Fondation locale Next.js, React, TypeScript strict et PostgreSQL, portable vers AWS.
 
-## Built with v0
+## Prérequis
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+- Windows 10/11
+- Node.js 22 LTS (installer sur `D:` si nécessaire)
+- pnpm 11.7.0
+- Docker Desktop avec ses données déplacées sur `D:` si l'espace disque l'exige
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_oqUbgsZ1hxloZ6mr2pXbti6gYlcp)
+## Démarrage local
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
+```powershell
+Copy-Item .env.example .env
+pnpm install
+docker compose up -d
+pnpm db:migrate
+pnpm db:verify
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Ouvrir <http://localhost:3000>. La route <http://localhost:3000/api/health> renvoie l'état de l'application, de PostgreSQL et de la migration, sans secret.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Configuration
 
-## Learn More
+Modifier `.env` (jamais versionné) :
 
-To learn more, take a look at the following resources:
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT`
+- `DATABASE_URL`, URL PostgreSQL locale
+- `DATABASE_SCHEMA`, par défaut `eblon_bibliotheque`
+- `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`
+- `TRUSTED_ORIGINS`, origines autorisées séparées par des virgules
+- `RESEND_API_KEY`, `EMAIL_FROM` si l'envoi d'e-mails est utilisé
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
+## Commandes de qualité
+
+```powershell
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Les migrations sont explicites et versionnées dans `migrations/`. Aucune table n'est créée automatiquement au démarrage. La première migration crée uniquement le schéma configuré et la table technique `foundation_status`.
+
+Les commandes `pnpm db:migrate` et `pnpm db:verify` chargent automatiquement le fichier `.env`. Les métadonnées de migration sont isolées dans `<DATABASE_SCHEMA>.pgmigrations`, soit `eblon_bibliotheque.pgmigrations` avec la configuration par défaut.
+
+## Arrêt
+
+```powershell
+docker compose down
+```
+
+Ajouter `-v` uniquement pour supprimer volontairement les données PostgreSQL locales.
+
+## Incidents courants
+
+- **Port 5432 occupé** : modifier `POSTGRES_PORT` et le port de `DATABASE_URL`.
+- **Base indisponible** : vérifier `docker compose ps` et `docker compose logs postgres`.
+- **Migration absente** : exécuter `pnpm db:migrate`, puis `pnpm db:verify`.
+- **Variables invalides** : comparer `.env` avec `.env.example` sans copier de secret dans Git.
+- **Docker absent** : installer Docker Desktop sur `D:` puis relancer les commandes Docker.
+
+## Architecture progressive
+
+- `app/` : routes et interface Next.js existantes
+- `components/ui/` : composants UI génériques
+- `components/` : composants partagés et écrans existants
+- `config/` : validation de configuration
+- `lib/` : services techniques et accès aux données existants
+- `migrations/` : migrations PostgreSQL versionnées
+- `scripts/` : vérifications techniques
+- `tests/` : tests minimaux
+
+Le prototype métier existant est conservé. Sa réorganisation progressive vers `features/`, `domain/` et `types/` se fera avec les développements métier futurs afin d'éviter une refonte risquée à ce stade.

@@ -31,11 +31,7 @@ export function ParametresForm({
   async function submit() {
     setSaving(true)
     try {
-      const res = await saveParametres(form)
-      if (res?.error) {
-        toast.error(res.error)
-        return
-      }
+      await saveParametres(form)
       toast.success("Paramètres enregistrés.")
       router.refresh()
     } catch (err) {

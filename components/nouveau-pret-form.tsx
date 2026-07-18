@@ -180,7 +180,7 @@ export function NouveauPretForm({
           <CardContent className="grid gap-4 pt-6">
             <div className="grid gap-2">
               <Label>Élève</Label>
-              <Select value={eleveId} onValueChange={setEleveId}>
+              <Select value={eleveId} onValueChange={(value) => value && setEleveId(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un élève" />
                 </SelectTrigger>
