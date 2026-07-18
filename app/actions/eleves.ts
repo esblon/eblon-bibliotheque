@@ -4,47 +4,23 @@ import { db } from "@/lib/db"
 import { eleves, emprunts, livres } from "@/lib/db/schema"
 import { requireUser, requireAdmin } from "@/lib/session"
 import { logAction } from "@/lib/history"
-import { and, eq, ilike, or, desc, ne, sql } from "drizzle-orm"
+import { and, eq, ilike, desc, ne } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { pool } from "@/lib/db"
+import { parseServerEnvironment } from "@/config/env"
 
 export async function getEleves(search?: string) {
   await requireUser()
-  const conditions = [eq(eleves.archived, false)]
-  if (search) {
-    const s = `%${search}%`
-    conditions.push(
-      or(
-        ilike(eleves.nom, s),
-        ilike(eleves.prenom, s),
-        ilike(eleves.identifiantEleve, s),
-        ilike(eleves.classe, s),
-      )!,
-    )
-  }
-  return db
-    .select({
-      id: eleves.id,
-      identifiantEleve: eleves.identifiantEleve,
-      nom: eleves.nom,
-      prenom: eleves.prenom,
-      classe: eleves.classe,
-      niveau: eleves.niveau,
-      etablissement: eleves.etablissement,
-      telephoneParent: eleves.telephoneParent,
-      statut: eleves.statut,
-      commentaire: eleves.commentaire,
-      archived: eleves.archived,
-      createdAt: eleves.createdAt,
-      updatedAt: eleves.updatedAt,
-      empruntsEnCours: sql<number>`(
-        select count(*)::int from ${emprunts}
-        where ${emprunts.eleveId} = ${eleves.id}
-        and ${emprunts.statut} in ('En cours', 'En retard')
-      )`,
-    })
-    .from(eleves)
-    .where(and(...conditions))
-    .orderBy(desc(eleves.createdAt))
+  const s=`"${parseServerEnvironment().DATABASE_SCHEMA}"`;const valeurs:unknown[]=[];let recherche=""
+  if(search){valeurs.push(`%${search}%`);recherche=`AND (p.nom ILIKE $1 OR p.prenom ILIKE $1 OR p.numero_emprunteur ILIKE $1 OR p.classe ILIKE $1)`}
+  const result=await pool.query<{id:number;identifiantEleve:string;nom:string;prenom:string;classe:string|null;niveau:string;etablissement:string|null;telephoneParent:string|null;statut:string;commentaire:string|null;archived:boolean;createdAt:Date;updatedAt:Date;empruntsEnCours:number}>(`SELECT p.id,p.numero_emprunteur "identifiantEleve",p.nom,p.prenom,p.classe,coalesce(n.nom,'Autre') niveau,p.etablissement,p.telephone "telephoneParent",
+    CASE p.statut WHEN 'ACTIF' THEN 'Actif' WHEN 'SUSPENDU' THEN 'Suspendu' ELSE 'Archivé' END statut,NULL::text commentaire,
+    (p.statut='ARCHIVE') archived,p.date_creation "createdAt",p.date_modification "updatedAt",
+    count(e.id) FILTER(WHERE e.statut IN('ACTIF','EN_RETARD'))::int "empruntsEnCours"
+    FROM ${s}.emprunteurs p LEFT JOIN ${s}.niveaux_scolaires n ON n.id=p.niveau_scolaire_id
+    LEFT JOIN ${s}.emprunts e ON e.emprunteur_id=p.id WHERE p.statut<>'ARCHIVE' ${recherche}
+    GROUP BY p.id,n.nom ORDER BY p.date_creation DESC`,valeurs)
+  return result.rows
 }
 
 export async function getEleve(id: number) {
@@ -190,21 +166,9 @@ export async function getEleveEmprunts(eleveId: number) {
 
 // Lightweight list for select inputs (loan creation).
 export async function getElevesForSelect() {
-  await requireUser()
-  return db
-    .select({
-      id: eleves.id,
-      identifiantEleve: eleves.identifiantEleve,
-      nom: eleves.nom,
-      prenom: eleves.prenom,
-      classe: eleves.classe,
-    })
-    .from(eleves)
-    .where(and(eq(eleves.archived, false), eq(eleves.statut, "Actif")))
-    .orderBy(eleves.nom)
+  return (await getEleves()).filter((e)=>e.statut==="Actif").map(({id,identifiantEleve,nom,prenom,classe})=>({id,identifiantEleve,nom,prenom,classe}))
 }
 
 export async function getAllElevesForExport() {
-  await requireUser()
-  return db.select().from(eleves).orderBy(desc(eleves.createdAt))
+  return getEleves()
 }

@@ -5,23 +5,10 @@ import { emprunts, livres, eleves } from "@/lib/db/schema"
 import { requireUser } from "@/lib/session"
 import { logAction } from "@/lib/history"
 import { getDureePret } from "@/app/actions/parametres"
-import { and, eq, desc, lt, isNull, sql } from "drizzle-orm"
+import { and, eq, desc, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-
-// Marks any "En cours" loan whose due date has passed as "En retard".
-// Called defensively at the start of every read so the dashboard is accurate.
-async function refreshRetards() {
-  await db
-    .update(emprunts)
-    .set({ statut: "En retard", updatedAt: new Date() })
-    .where(
-      and(
-        eq(emprunts.statut, "En cours"),
-        lt(emprunts.dateRetourPrevue, new Date()),
-        isNull(emprunts.dateRetourReelle),
-      ),
-    )
-}
+import { pool } from "@/lib/db"
+import { parseServerEnvironment } from "@/config/env"
 
 async function nextNumeroEmprunt() {
   const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(emprunts)
@@ -73,22 +60,17 @@ function baseSelect() {
 
 export async function getEmprunts(): Promise<EmpruntRow[]> {
   await requireUser()
-  await refreshRetards()
-  return baseSelect().orderBy(desc(emprunts.createdAt))
+  return lireEmpruntsMetier()
 }
 
 export async function getEmpruntsEnCours(): Promise<EmpruntRow[]> {
   await requireUser()
-  await refreshRetards()
-  return baseSelect()
-    .where(sql`${emprunts.statut} in ('En cours', 'En retard')`)
-    .orderBy(emprunts.dateRetourPrevue)
+  return lireEmpruntsMetier("actifs")
 }
 
 export async function getRetards(): Promise<EmpruntRow[]> {
   await requireUser()
-  await refreshRetards()
-  return baseSelect().where(eq(emprunts.statut, "En retard")).orderBy(emprunts.dateRetourPrevue)
+  return lireEmpruntsMetier("retards")
 }
 
 // Create a loan. Enforces that the book is available.
@@ -216,6 +198,19 @@ export async function getEmpruntActifByLivre(livreId: number) {
 
 export async function getAllEmpruntsForExport() {
   await requireUser()
-  await refreshRetards()
-  return baseSelect().orderBy(desc(emprunts.createdAt))
+  return lireEmpruntsMetier()
+}
+
+async function lireEmpruntsMetier(filtre?: "actifs" | "retards"): Promise<EmpruntRow[]> {
+  const s = `"${parseServerEnvironment().DATABASE_SCHEMA}"`
+  const where = filtre === "retards"
+    ? "WHERE e.statut='EN_RETARD' OR (e.statut='ACTIF' AND e.date_echeance<current_timestamp)"
+    : filtre === "actifs" ? "WHERE e.statut IN ('ACTIF','EN_RETARD')" : ""
+  const result = await pool.query<EmpruntRow>(`SELECT e.id,e.id::text "numeroEmprunt",e.statut,e.date_emprunt "dateEmprunt",
+    e.date_echeance "dateRetourPrevue",e.date_retour "dateRetourReelle",e.observations commentaire,
+    x.id "livreId",p.id "eleveId",o.titre,x.code_inventaire "codeLivre",p.nom "eleveNom",p.prenom "elevePrenom",
+    p.classe,p.telephone "telephoneParent" FROM ${s}.emprunts e JOIN ${s}.exemplaires x ON x.id=e.exemplaire_id
+    JOIN ${s}.ouvrages o ON o.id=x.ouvrage_id JOIN ${s}.emprunteurs p ON p.id=e.emprunteur_id ${where}
+    ORDER BY ${filtre ? "e.date_echeance ASC" : "e.date_creation DESC"}`)
+  return result.rows.map((row) => ({ ...row, statut: row.statut === "ACTIF" ? "En cours" : row.statut === "EN_RETARD" ? "En retard" : row.statut === "RETOURNE" ? "Retourné" : row.statut === "PERDU" ? "Perdu" : row.statut === "ANNULE" ? "Annulé" : row.statut }))
 }

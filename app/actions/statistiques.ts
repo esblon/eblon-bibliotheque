@@ -1,101 +1,27 @@
 "use server"
 
-import { db } from "@/lib/db"
-import { emprunts, livres, eleves, historiqueActions } from "@/lib/db/schema"
+import { pool } from "@/lib/db"
+import { parseServerEnvironment } from "@/config/env"
 import { requireUser } from "@/lib/session"
-import { eq, desc, sql } from "drizzle-orm"
 
 export async function getStatistiques() {
   await requireUser()
-
-  // Loans per month (last 6 months)
-  const parMois = await db
-    .select({
-      mois: sql<string>`to_char(${emprunts.dateEmprunt}, 'YYYY-MM')`,
-      total: sql<number>`count(*)::int`,
-    })
-    .from(emprunts)
-    .groupBy(sql`to_char(${emprunts.dateEmprunt}, 'YYYY-MM')`)
-    .orderBy(sql`to_char(${emprunts.dateEmprunt}, 'YYYY-MM')`)
-
-  // Most borrowed books
-  const livresPopulaires = await db
-    .select({
-      titre: livres.titre,
-      codeLivre: livres.codeLivre,
-      total: sql<number>`count(${emprunts.id})::int`,
-    })
-    .from(emprunts)
-    .leftJoin(livres, eq(emprunts.livreId, livres.id))
-    .groupBy(livres.titre, livres.codeLivre)
-    .orderBy(desc(sql`count(${emprunts.id})`))
-    .limit(5)
-
-  // Most demanded subjects
-  const matieresPopulaires = await db
-    .select({
-      matiere: livres.matiere,
-      total: sql<number>`count(${emprunts.id})::int`,
-    })
-    .from(emprunts)
-    .leftJoin(livres, eq(emprunts.livreId, livres.id))
-    .groupBy(livres.matiere)
-    .orderBy(desc(sql`count(${emprunts.id})`))
-    .limit(6)
-
-  // Top students
-  const elevesActifs = await db
-    .select({
-      nom: eleves.nom,
-      prenom: eleves.prenom,
-      classe: eleves.classe,
-      total: sql<number>`count(${emprunts.id})::int`,
-    })
-    .from(emprunts)
-    .leftJoin(eleves, eq(emprunts.eleveId, eleves.id))
-    .groupBy(eleves.nom, eleves.prenom, eleves.classe)
-    .orderBy(desc(sql`count(${emprunts.id})`))
-    .limit(5)
-
-  // Book status counts for rates
-  const statutsLivre = await db
-    .select({
-      statut: livres.statut,
-      total: sql<number>`count(*)::int`,
-    })
-    .from(livres)
-    .where(eq(livres.archived, false))
-    .groupBy(livres.statut)
-
-  const totalLivres = statutsLivre.reduce((s, r) => s + Number(r.total), 0)
-  const count = (st: string) => Number(statutsLivre.find((r) => r.statut === st)?.total ?? 0)
-
-  const rate = (n: number) => (totalLivres > 0 ? Math.round((n / totalLivres) * 100) : 0)
-
-  const [{ retards }] = await db
-    .select({ retards: sql<number>`count(*)::int` })
-    .from(emprunts)
-    .where(eq(emprunts.statut, "En retard"))
-
-  // Recent movements
-  const mouvements = await db
-    .select()
-    .from(historiqueActions)
-    .orderBy(desc(historiqueActions.dateAction))
-    .limit(20)
-
+  const s = `"${parseServerEnvironment().DATABASE_SCHEMA}"`
+  const [parMois, livres, matieres, eleves, statuts, retards, mouvements] = await Promise.all([
+    pool.query<{ mois: string; total: number }>(`SELECT to_char(date_emprunt,'YYYY-MM') mois,count(*)::int total FROM ${s}.emprunts GROUP BY 1 ORDER BY 1`),
+    pool.query<{ titre: string; codeLivre: string; total: number }>(`SELECT o.titre,min(x.code_inventaire) "codeLivre",count(e.id)::int total FROM ${s}.emprunts e JOIN ${s}.exemplaires x ON x.id=e.exemplaire_id JOIN ${s}.ouvrages o ON o.id=x.ouvrage_id GROUP BY o.id,o.titre ORDER BY total DESC LIMIT 5`),
+    pool.query<{ matiere: string; total: number }>(`SELECT m.nom matiere,count(e.id)::int total FROM ${s}.emprunts e JOIN ${s}.exemplaires x ON x.id=e.exemplaire_id JOIN ${s}.ouvrages o ON o.id=x.ouvrage_id JOIN ${s}.matieres m ON m.id=o.matiere_id GROUP BY m.id,m.nom ORDER BY total DESC LIMIT 6`),
+    pool.query<{ nom: string; prenom: string; classe: string | null; total: number }>(`SELECT p.nom,p.prenom,p.classe,count(e.id)::int total FROM ${s}.emprunts e JOIN ${s}.emprunteurs p ON p.id=e.emprunteur_id GROUP BY p.id,p.nom,p.prenom,p.classe ORDER BY total DESC LIMIT 5`),
+    pool.query<{ statut: string; total: number }>(`SELECT statut,count(*)::int total FROM ${s}.exemplaires WHERE statut<>'RETIRE' GROUP BY statut`),
+    pool.query<{ retards: number }>(`SELECT count(*)::int retards FROM ${s}.emprunts WHERE statut='EN_RETARD' OR (statut='ACTIF' AND date_echeance<current_timestamp)`),
+    pool.query<{ id: string; action: string; utilisateurNom: string | null; cible: string; details: string | null; dateAction: Date }>(`SELECT v.id,v.type_evenement action,concat_ws(' ',a.prenom,a.nom) "utilisateurNom",'emprunt' cible,v.details::text details,v.date_evenement "dateAction" FROM ${s}.evenements_emprunt v LEFT JOIN ${s}.agents a ON a.id=v.agent_id ORDER BY v.date_evenement DESC LIMIT 20`),
+  ])
+  const total = statuts.rows.reduce((sum, row) => sum + row.total, 0)
+  const nombre = (statut: string) => statuts.rows.find((row) => row.statut === statut)?.total ?? 0
+  const taux = (nombre: number) => total ? Math.round(nombre / total * 100) : 0
   return {
-    parMois: parMois.map((r) => ({ mois: r.mois, total: Number(r.total) })),
-    livresPopulaires: livresPopulaires.map((r) => ({ ...r, total: Number(r.total) })),
-    matieresPopulaires: matieresPopulaires.map((r) => ({ ...r, total: Number(r.total) })),
-    elevesActifs: elevesActifs.map((r) => ({ ...r, total: Number(r.total) })),
-    taux: {
-      disponibles: rate(count("Disponible")),
-      empruntes: rate(count("Emprunté")),
-      perdus: rate(count("Perdu")),
-      abimes: rate(count("Abîmé")),
-    },
-    retards: Number(retards),
-    mouvements,
+    parMois: parMois.rows, livresPopulaires: livres.rows, matieresPopulaires: matieres.rows, elevesActifs: eleves.rows,
+    taux: { disponibles: taux(nombre("DISPONIBLE")), empruntes: taux(nombre("EMPRUNTE")), perdus: taux(nombre("PERDU")), abimes: taux(nombre("ABIME")) },
+    retards: retards.rows[0]?.retards ?? 0, mouvements: mouvements.rows,
   }
 }

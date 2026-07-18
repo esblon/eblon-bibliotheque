@@ -40,10 +40,17 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     setLoading(false)
 
     if (error) {
+      const message = error.message?.toLowerCase() ?? ""
       setError(
         error.message === "Invalid email or password"
           ? "Email ou mot de passe incorrect"
-          : (error.message ?? "Une erreur est survenue"),
+          : error.status === 422 || message.includes("already exists") || message.includes("already use")
+            ? "Cette adresse email est déjà utilisée"
+            : error.status === 400 && message.includes("password")
+              ? "Le mot de passe ne respecte pas les critères requis"
+              : error.status && error.status >= 500
+                ? "Le service d’authentification est temporairement indisponible"
+                : (error.message ?? "Une erreur interne est survenue"),
       )
       return
     }

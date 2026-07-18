@@ -19,7 +19,7 @@ type Stats = {
   taux: { disponibles: number; empruntes: number; perdus: number; abimes: number }
   retards: number
   mouvements: {
-    id: number
+    id: number | string
     action: string
     utilisateurNom: string | null
     cible: string | null

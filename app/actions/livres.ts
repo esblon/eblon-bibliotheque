@@ -5,8 +5,10 @@ import { livres, emprunts, eleves } from "@/lib/db/schema"
 import { requireUser, requireAdmin } from "@/lib/session"
 import { logAction } from "@/lib/history"
 import { NIVEAU_CODES, MATIERE_CODES } from "@/lib/constants"
-import { and, eq, ilike, or, desc, ne } from "drizzle-orm"
+import { and, eq, ilike, desc, ne } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { pool } from "@/lib/db"
+import { parseServerEnvironment } from "@/config/env"
 
 export type LivreFilters = {
   search?: string
@@ -18,24 +20,19 @@ export type LivreFilters = {
 
 export async function getLivres(filters: LivreFilters = {}) {
   await requireUser()
-  const conditions = [eq(livres.archived, false)]
-
-  if (filters.search) {
-    const s = `%${filters.search}%`
-    conditions.push(
-      or(ilike(livres.titre, s), ilike(livres.codeLivre, s))!,
-    )
-  }
-  if (filters.niveau) conditions.push(eq(livres.niveau, filters.niveau))
-  if (filters.matiere) conditions.push(eq(livres.matiere, filters.matiere))
-  if (filters.statut) conditions.push(eq(livres.statut, filters.statut))
-  if (filters.type) conditions.push(eq(livres.typeLivre, filters.type))
-
-  return db
-    .select()
-    .from(livres)
-    .where(and(...conditions))
-    .orderBy(desc(livres.createdAt))
+  const s = `"${parseServerEnvironment().DATABASE_SCHEMA}"`; const valeurs: unknown[]=[]; const conditions=["x.statut<>'RETIRE'"]
+  if(filters.search){valeurs.push(`%${filters.search}%`);conditions.push(`(o.titre ILIKE $${valeurs.length} OR x.code_inventaire ILIKE $${valeurs.length})`)}
+  if(filters.niveau){valeurs.push(filters.niveau);conditions.push(`n.nom=$${valeurs.length}`)}
+  if(filters.matiere){valeurs.push(filters.matiere);conditions.push(`m.nom=$${valeurs.length}`)}
+  const statuts:Record<string,string>={Disponible:"DISPONIBLE","Emprunté":"EMPRUNTE",Perdu:"PERDU","Abîmé":"ABIME","Retiré":"RETIRE"}
+  if(filters.statut){valeurs.push(statuts[filters.statut]??filters.statut);conditions.push(`x.statut=$${valeurs.length}`)}
+  const result=await pool.query<{id:number;codeLivre:string;titre:string;niveau:string;matiere:string;typeLivre:string;edition:string|null;etatPhysique:string;statut:string;localisation:string;qrCodeUrl:string|null;commentaire:string|null;archived:boolean;createdAt:Date;updatedAt:Date}>(`SELECT x.id,x.code_inventaire "codeLivre",o.titre,n.nom niveau,m.nom matiere,'Ouvrage' "typeLivre",o.edition,
+    CASE x.statut WHEN 'ABIME' THEN 'Abîmé' WHEN 'PERDU' THEN 'Perdu' ELSE 'Bon' END "etatPhysique",
+    CASE x.statut WHEN 'DISPONIBLE' THEN 'Disponible' WHEN 'EMPRUNTE' THEN 'Emprunté' WHEN 'PERDU' THEN 'Perdu' WHEN 'ABIME' THEN 'Abîmé' WHEN 'RETIRE' THEN 'Retiré' ELSE initcap(lower(x.statut)) END statut,
+    'Bibliothèque' localisation,x.code_qr "qrCodeUrl",x.observations commentaire,false archived,x.date_creation "createdAt",x.date_modification "updatedAt"
+    FROM ${s}.exemplaires x JOIN ${s}.ouvrages o ON o.id=x.ouvrage_id JOIN ${s}.niveaux_scolaires n ON n.id=o.niveau_scolaire_id
+    JOIN ${s}.matieres m ON m.id=o.matiere_id WHERE ${conditions.join(" AND ")} ORDER BY x.date_creation DESC`,valeurs)
+  return result.rows
 }
 
 export async function getLivre(id: number) {
@@ -226,6 +223,5 @@ export async function getLivreEmprunts(livreId: number) {
 }
 
 export async function getAllLivresForExport() {
-  await requireUser()
-  return db.select().from(livres).orderBy(desc(livres.createdAt))
+  return getLivres()
 }
