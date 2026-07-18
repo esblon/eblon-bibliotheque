@@ -1,104 +1,54 @@
 "use server"
 
-import { db } from "@/lib/db"
-import { livres, eleves, emprunts } from "@/lib/db/schema"
+import { pool } from "@/lib/db"
+import { parseServerEnvironment } from "@/config/env"
 import { requireUser } from "@/lib/session"
-import { and, eq, sql, isNull, lt, desc, count } from "drizzle-orm"
 
-// Marks overdue loans (En cours + past due date) as "En retard".
-async function refreshRetards() {
-  const now = new Date()
-  await db
-    .update(emprunts)
-    .set({ statut: "En retard", updatedAt: now })
-    .where(
-      and(
-        eq(emprunts.statut, "En cours"),
-        isNull(emprunts.dateRetourReelle),
-        lt(emprunts.dateRetourPrevue, now),
-      ),
-    )
-}
+const schema = () => `"${parseServerEnvironment().DATABASE_SCHEMA}"`
 
 export async function getDashboardStats() {
   await requireUser()
-  await refreshRetards()
-
-  const allLivres = await db
-    .select()
-    .from(livres)
-    .where(eq(livres.archived, false))
-
-  const totalLivres = allLivres.length
-  const disponibles = allLivres.filter((l) => l.statut === "Disponible").length
-  const empruntesLivres = allLivres.filter((l) => l.statut === "Emprunté").length
-  const perdus = allLivres.filter((l) => l.statut === "Perdu").length
-  const abimes = allLivres.filter((l) => l.statut === "Abîmé").length
-
-  const empruntsEnCours = allLivres.length
-    ? await db
-        .select({ c: count() })
-        .from(emprunts)
-        .where(
-          sql`${emprunts.statut} IN ('En cours', 'En retard')`,
-        )
-    : [{ c: 0 }]
-
-  const retards = await db
-    .select({ c: count() })
-    .from(emprunts)
-    .where(eq(emprunts.statut, "En retard"))
-
-  const totalEleves = await db
-    .select({ c: count() })
-    .from(eleves)
-    .where(eq(eleves.archived, false))
-
-  // Répartition par niveau
-  const parNiveau: Record<string, number> = {}
-  for (const l of allLivres) {
-    parNiveau[l.niveau] = (parNiveau[l.niveau] ?? 0) + 1
-  }
-
-  // Répartition par matière
-  const parMatiere: Record<string, number> = {}
-  for (const l of allLivres) {
-    parMatiere[l.matiere] = (parMatiere[l.matiere] ?? 0) + 1
-  }
-
+  const s = schema()
+  const result = await pool.query<{
+    total_livres: number; disponibles: number; empruntes: number; perdus: number; abimes: number
+    emprunts_en_cours: number; retards: number; total_eleves: number
+  }>(`SELECT
+    (SELECT count(*)::int FROM ${s}.exemplaires WHERE statut <> 'RETIRE') total_livres,
+    (SELECT count(*)::int FROM ${s}.exemplaires WHERE statut = 'DISPONIBLE') disponibles,
+    (SELECT count(*)::int FROM ${s}.exemplaires WHERE statut = 'EMPRUNTE') empruntes,
+    (SELECT count(*)::int FROM ${s}.exemplaires WHERE statut = 'PERDU') perdus,
+    (SELECT count(*)::int FROM ${s}.exemplaires WHERE statut = 'ABIME') abimes,
+    (SELECT count(*)::int FROM ${s}.emprunts WHERE statut IN ('ACTIF','EN_RETARD')) emprunts_en_cours,
+    (SELECT count(*)::int FROM ${s}.emprunts WHERE statut = 'EN_RETARD' OR (statut='ACTIF' AND date_echeance < current_timestamp)) retards,
+    (SELECT count(*)::int FROM ${s}.emprunteurs WHERE statut <> 'ARCHIVE') total_eleves`)
+  const repartitions = await pool.query<{ type: "niveau" | "matiere"; libelle: string; total: number }>(`
+    SELECT 'niveau' type,n.nom libelle,count(e.id)::int total FROM ${s}.niveaux_scolaires n
+      JOIN ${s}.ouvrages o ON o.niveau_scolaire_id=n.id JOIN ${s}.exemplaires e ON e.ouvrage_id=o.id
+      WHERE e.statut<>'RETIRE' GROUP BY n.id,n.nom
+    UNION ALL
+    SELECT 'matiere',m.nom,count(e.id)::int FROM ${s}.matieres m
+      JOIN ${s}.ouvrages o ON o.matiere_id=m.id JOIN ${s}.exemplaires e ON e.ouvrage_id=o.id
+      WHERE e.statut<>'RETIRE' GROUP BY m.id,m.nom`)
+  const stats = result.rows[0]
   return {
-    totalLivres,
-    disponibles,
-    empruntesLivres,
-    perdus,
-    abimes,
-    empruntsEnCours: Number(empruntsEnCours[0]?.c ?? 0),
-    retards: Number(retards[0]?.c ?? 0),
-    totalEleves: Number(totalEleves[0]?.c ?? 0),
-    parNiveau,
-    parMatiere,
+    totalLivres: stats?.total_livres ?? 0, disponibles: stats?.disponibles ?? 0,
+    empruntesLivres: stats?.empruntes ?? 0, perdus: stats?.perdus ?? 0, abimes: stats?.abimes ?? 0,
+    empruntsEnCours: stats?.emprunts_en_cours ?? 0, retards: stats?.retards ?? 0, totalEleves: stats?.total_eleves ?? 0,
+    parNiveau: Object.fromEntries(repartitions.rows.filter((r) => r.type === "niveau").map((r) => [r.libelle, r.total])),
+    parMatiere: Object.fromEntries(repartitions.rows.filter((r) => r.type === "matiere").map((r) => [r.libelle, r.total])),
   }
 }
 
 export async function getRecentEmprunts(limit = 5) {
   await requireUser()
-  const rows = await db
-    .select({
-      id: emprunts.id,
-      numeroEmprunt: emprunts.numeroEmprunt,
-      statut: emprunts.statut,
-      dateEmprunt: emprunts.dateEmprunt,
-      dateRetourPrevue: emprunts.dateRetourPrevue,
-      titre: livres.titre,
-      codeLivre: livres.codeLivre,
-      nom: eleves.nom,
-      prenom: eleves.prenom,
-      classe: eleves.classe,
-    })
-    .from(emprunts)
-    .leftJoin(livres, eq(emprunts.livreId, livres.id))
-    .leftJoin(eleves, eq(emprunts.eleveId, eleves.id))
-    .orderBy(desc(emprunts.createdAt))
-    .limit(limit)
-  return rows
+  const s = schema(); const limite = Math.min(Math.max(Math.trunc(limit), 1), 20)
+  const rows = await pool.query<{
+    id: string; numeroEmprunt: string; statut: string; dateEmprunt: Date; dateRetourPrevue: Date
+    titre: string; codeLivre: string; nom: string; prenom: string; classe: string | null
+  }>(`SELECT e.id,e.id::text "numeroEmprunt",e.statut,e.date_emprunt "dateEmprunt",e.date_echeance "dateRetourPrevue",
+      o.titre,x.code_inventaire "codeLivre",p.nom,p.prenom,p.classe
+    FROM ${s}.emprunts e JOIN ${s}.exemplaires x ON x.id=e.exemplaire_id
+    JOIN ${s}.ouvrages o ON o.id=x.ouvrage_id JOIN ${s}.emprunteurs p ON p.id=e.emprunteur_id
+    ORDER BY e.date_creation DESC LIMIT $1`, [limite])
+  return rows.rows.map((row) => ({ ...row, statut: row.statut === "ACTIF" ? "En cours" : row.statut === "EN_RETARD" ? "En retard" : row.statut === "RETOURNE" ? "Retourné" : row.statut }))
 }

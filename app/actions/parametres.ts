@@ -1,64 +1,10 @@
 "use server"
-
-import { db } from "@/lib/db"
-import { parametres } from "@/lib/db/schema"
-import { requireUser, requireAdmin } from "@/lib/session"
-import { logAction } from "@/lib/history"
-import { eq } from "drizzle-orm"
-import { revalidatePath } from "next/cache"
-
-const DEFAULTS: Record<string, string> = {
-  duree_pret_jours: "7",
-  nom_etablissement: "Lycée Moderne Facobly",
-  nom_professeur: "Professeur référent",
-}
-
-export async function getParametre(cle: string): Promise<string> {
-  const [row] = await db.select().from(parametres).where(eq(parametres.cle, cle))
-  return row?.valeur ?? DEFAULTS[cle] ?? ""
-}
-
-export async function getParametres(): Promise<Record<string, string>> {
-  const rows = await db.select().from(parametres)
-  const map: Record<string, string> = { ...DEFAULTS }
-  for (const r of rows) {
-    if (r.valeur !== null) map[r.cle] = r.valeur
-  }
-  return map
-}
-
-export async function getDureePret(): Promise<number> {
-  const v = await getParametre("duree_pret_jours")
-  const n = Number.parseInt(v, 10)
-  return Number.isNaN(n) || n <= 0 ? 7 : n
-}
-
-export async function setParametre(cle: string, valeur: string) {
-  const user = await requireUser()
-  const [existing] = await db.select().from(parametres).where(eq(parametres.cle, cle))
-  if (existing) {
-    await db
-      .update(parametres)
-      .set({ valeur, updatedAt: new Date() })
-      .where(eq(parametres.cle, cle))
-  } else {
-    await db.insert(parametres).values({ cle, valeur })
-  }
-  await logAction(user, "Modification paramètre", "paramètre", cle, `${cle} = ${valeur}`)
-  revalidatePath("/parametres")
-}
-
-export async function saveParametres(values: Record<string, string>) {
-  await requireUser()
-  for (const [cle, valeur] of Object.entries(values)) {
-    await setParametre(cle, valeur)
-  }
-  return { data: true }
-}
-
-export async function resetParametres() {
-  await requireAdmin()
-  await db.delete(parametres)
-  revalidatePath("/parametres")
-  return { data: true }
-}
+import{pool}from"@/lib/db";import{parseServerEnvironment}from"@/config/env";import{requireUser,requireAdmin}from"@/lib/session";import{revalidatePath}from"next/cache"
+const DEFAULTS:Record<string,string>={duree_pret_jours:"7",nom_etablissement:"Lycée Moderne Facobly",nom_professeur:"Professeur référent"}
+const AUTORISEES=new Set(Object.keys(DEFAULTS));const schema=()=>`"${parseServerEnvironment().DATABASE_SCHEMA}"`
+export async function getParametre(cle:string){if(!AUTORISEES.has(cle))return"";const r=await pool.query<{valeur:string|null}>(`SELECT valeur FROM ${schema()}.parametres_application WHERE cle=$1`,[cle]);return r.rows[0]?.valeur??DEFAULTS[cle]??""}
+export async function getParametres(){const r=await pool.query<{cle:string;valeur:string|null}>(`SELECT cle,valeur FROM ${schema()}.parametres_application`);return Object.assign({...DEFAULTS},Object.fromEntries(r.rows.filter(x=>x.valeur!==null).map(x=>[x.cle,x.valeur!]))) }
+export async function getDureePret(){const n=Number.parseInt(await getParametre("duree_pret_jours"),10);return Number.isNaN(n)||n<=0?7:n}
+export async function setParametre(cle:string,valeur:string){await requireUser();if(!AUTORISEES.has(cle))throw new Error("Paramètre inconnu");await pool.query(`INSERT INTO ${schema()}.parametres_application(cle,valeur) VALUES($1,$2) ON CONFLICT(cle) DO UPDATE SET valeur=EXCLUDED.valeur,date_modification=current_timestamp`,[cle,valeur]);revalidatePath("/parametres")}
+export async function saveParametres(values:Record<string,string>){await requireUser();for(const[cle,valeur]of Object.entries(values))await setParametre(cle,valeur);return{data:true}}
+export async function resetParametres(){await requireAdmin();await pool.query(`UPDATE ${schema()}.parametres_application SET valeur=CASE cle WHEN 'duree_pret_jours' THEN '7' WHEN 'nom_etablissement' THEN 'Lycée Moderne Facobly' WHEN 'nom_professeur' THEN 'Professeur référent' END,date_modification=current_timestamp`);revalidatePath("/parametres");return{data:true}}

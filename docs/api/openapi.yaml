@@ -1,0 +1,61 @@
+openapi: 3.1.0
+info:
+  title: API EBLON BIBLIOTHÈQUE
+  version: 1.0.0
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+paths:
+  /matieres:
+    get: { summary: Lister les matières, parameters: [{ $ref: '#/components/parameters/page' }, { $ref: '#/components/parameters/limite' }, { $ref: '#/components/parameters/recherche' }], responses: { '200': { $ref: '#/components/responses/Liste' }, '401': { $ref: '#/components/responses/Erreur' } } }
+    post: { summary: Créer une matière, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' }, '400': { $ref: '#/components/responses/Erreur' }, '409': { $ref: '#/components/responses/Erreur' } } }
+  /matieres/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /niveaux-scolaires:
+    get: { summary: Lister les niveaux scolaires, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer un niveau scolaire, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' } } }
+  /niveaux-scolaires/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /ouvrages:
+    get: { summary: Lister et filtrer les ouvrages, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer un ouvrage, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' } } }
+  /ouvrages/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /exemplaires:
+    get: { summary: Lister et filtrer les exemplaires, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer un exemplaire, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' } } }
+  /exemplaires/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /emprunteurs:
+    get: { summary: Lister et filtrer les emprunteurs, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer un emprunteur, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' } } }
+  /emprunteurs/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /agents:
+    get: { summary: Lister les agents, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer un agent sans mot de passe, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' } } }
+  /agents/{id}: { $ref: '#/components/pathItems/Ressource' }
+  /emprunts:
+    get: { summary: Lister les emprunts, responses: { '200': { $ref: '#/components/responses/Liste' } } }
+    post: { summary: Créer transactionnellement un emprunt, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '201': { $ref: '#/components/responses/Ressource' }, '409': { $ref: '#/components/responses/Erreur' } } }
+  /emprunts/{id}:
+    get: { summary: Consulter un emprunt, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { $ref: '#/components/responses/Ressource' }, '404': { $ref: '#/components/responses/Erreur' } } }
+  /emprunts/{id}/retour: { post: { summary: Retourner un emprunt, parameters: [{ $ref: '#/components/parameters/id' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '200': { $ref: '#/components/responses/Ressource' } } } }
+  /emprunts/{id}/prolongation: { post: { summary: Prolonger un emprunt, parameters: [{ $ref: '#/components/parameters/id' }], requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '200': { $ref: '#/components/responses/Ressource' } } } }
+  /emprunts/{id}/marquer-en-retard: { post: { summary: Marquer en retard, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { $ref: '#/components/responses/Ressource' } } } }
+  /emprunts/{id}/marquer-perdu: { post: { summary: Marquer perdu, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { $ref: '#/components/responses/Ressource' } } } }
+  /emprunts/{id}/annulation: { post: { summary: Annuler un emprunt, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { $ref: '#/components/responses/Ressource' } } } }
+  /emprunts/{id}/evenements: { get: { summary: Consulter le journal immuable, parameters: [{ $ref: '#/components/parameters/id' }], responses: { '200': { $ref: '#/components/responses/Liste' } } } }
+components:
+  securitySchemes: { sessionCookie: { type: apiKey, in: cookie, name: better-auth.session_token } }
+  parameters:
+    id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    limite: { name: limite, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    recherche: { name: recherche, in: query, schema: { type: string, maxLength: 200 } }
+  requestBodies: { Json: { required: true, content: { application/json: { schema: { type: object } } } } }
+  pathItems:
+    Ressource:
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      get: { summary: Consulter la ressource, responses: { '200': { $ref: '#/components/responses/Ressource' }, '404': { $ref: '#/components/responses/Erreur' } } }
+      patch: { summary: Modifier sans suppression physique, requestBody: { $ref: '#/components/requestBodies/Json' }, responses: { '200': { $ref: '#/components/responses/Ressource' }, '400': { $ref: '#/components/responses/Erreur' } } }
+  responses:
+    Ressource: { description: Succès, content: { application/json: { schema: { type: object, required: [donnees, meta], properties: { donnees: { type: object }, meta: { type: object } } } } } }
+    Liste: { description: Liste paginée, content: { application/json: { schema: { type: object, required: [donnees, meta], properties: { donnees: { type: array, items: {} }, meta: { type: object } } } } } }
+    Erreur: { description: Erreur standard sans information interne, content: { application/json: { schema: { type: object, required: [erreur], properties: { erreur: { type: object, required: [code, message, details] } } } } } }

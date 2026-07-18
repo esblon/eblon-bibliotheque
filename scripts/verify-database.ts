@@ -38,7 +38,7 @@ async function main() {
       [DATABASE_SCHEMA],
     )
     const tables = new Set(tableResult.rows.map(({ table_name }) => table_name))
-    const manquantes = [...TABLES_METIER, "statut_fondation", "migrations_eblon_bibliotheque"].filter((t) => !tables.has(t))
+    const manquantes = [...TABLES_METIER, "statut_fondation", "migrations_eblon_bibliotheque", "parametres_application"].filter((t) => !tables.has(t))
     const anciennes = ANCIENNES_TABLES.filter((t) => tables.has(t))
     if (manquantes.length) throw new Error(`Tables manquantes: ${manquantes.join(", ")}`)
     if (anciennes.length) throw new Error(`Anciennes tables restantes: ${anciennes.join(", ")}`)
@@ -46,10 +46,16 @@ async function main() {
     const migrations = await client.query<{ name: string; occurrences: number }>(
       `SELECT name, count(*)::int AS occurrences FROM ${schema}.migrations_eblon_bibliotheque GROUP BY name ORDER BY name`,
     )
-    if (migrations.rows.length !== 4 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
-        migrations.rows.at(-1)?.name !== "000004_renommage_modele_francais") {
+    if (migrations.rows.length !== 7 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
+        migrations.rows.at(-1)?.name !== "000007_parametres_application") {
       throw new Error("Historique des migrations incohérent")
     }
+
+    const authTables = await client.query<{ table_name: string }>(
+      `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name=ANY($2::text[])`,
+      [DATABASE_SCHEMA, ["user", "session", "account", "verification"]],
+    )
+    if (authTables.rowCount !== 4) throw new Error("Tables Better Auth manquantes")
 
     const englishColumns = await client.query<{ table_name: string; column_name: string }>(
       `SELECT table_name, column_name FROM information_schema.columns
@@ -89,10 +95,10 @@ async function main() {
 
     const publicTables = await client.query(
       `SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name = ANY($1::text[])`,
-      [[...TABLES_METIER, ...ANCIENNES_TABLES]],
+      [[...TABLES_METIER, ...ANCIENNES_TABLES, "user", "session", "account", "verification"]],
     )
     if (publicTables.rowCount) throw new Error("Tables métier présentes dans public")
-    console.log("Vérification PostgreSQL: OK (modèle français, 4 migrations uniques, seed cohérent, relations intactes)")
+    console.log("Vérification PostgreSQL: OK (modèle français, authentification, 7 migrations uniques, seed cohérent, relations intactes)")
   } finally {
     await client.end()
   }

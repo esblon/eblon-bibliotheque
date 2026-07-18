@@ -16,6 +16,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    exclude: ["tests/business-api.integration.test.ts", "node_modules/**"],
     deps: {
       interopDefault: true,
     },

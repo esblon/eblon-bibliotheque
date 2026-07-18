@@ -1,0 +1,4 @@
+import type { MigrationBuilder, Name } from "node-pg-migrate"
+function schema(){const s=process.env.DATABASE_SCHEMA??"eblon_bibliotheque";if(!/^[a-z_][a-z0-9_]*$/.test(s))throw new Error("DATABASE_SCHEMA is invalid");return s}
+export function up(pgm:MigrationBuilder){const t:Name={schema:schema(),name:"parametres_application"};pgm.createTable(t,{cle:{type:"text",primaryKey:true},valeur:{type:"text"},date_creation:{type:"timestamptz",notNull:true,default:pgm.func("current_timestamp")},date_modification:{type:"timestamptz",notNull:true,default:pgm.func("current_timestamp")}});pgm.sql(`INSERT INTO "${schema()}".parametres_application(cle,valeur) VALUES ('duree_pret_jours','7'),('nom_etablissement','Lycée Moderne Facobly'),('nom_professeur','Professeur référent')`)}
+export function down(pgm:MigrationBuilder){pgm.dropTable({schema:schema(),name:"parametres_application"})}

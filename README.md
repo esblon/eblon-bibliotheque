@@ -140,6 +140,33 @@ docker compose down
 
 Ajouter `-v` uniquement pour supprimer volontairement les données PostgreSQL locales.
 
+## API métier REST
+
+L'API indépendante des écrans est exposée sous `/api/v1`. Les routes HTTP délèguent la validation Zod, les autorisations, les services métier et les repositories PostgreSQL. Toutes les requêtes utilisent des paramètres ; les opérations d'emprunt multi-tables utilisent une transaction.
+
+Ressources CRUD sans suppression physique : `matieres`, `niveaux-scolaires`, `ouvrages`, `exemplaires`, `emprunteurs` et `agents`. Les emprunts proposent en plus `retour`, `prolongation`, `marquer-en-retard`, `marquer-perdu`, `annulation` et la consultation de `evenements`.
+
+Les réponses suivent `{ "donnees": ..., "meta": ... }`. Les erreurs suivent `{ "erreur": { "code": "...", "message": "...", "details": {} } }` sans stack, SQL, token ni secret. La spécification complète se trouve dans `docs/api/openapi.yaml`.
+
+L'identité est obtenue depuis Better Auth, puis associée par email à un `agent` actif. Les lectures nécessitent une session. Les écritures de référentiels nécessitent `ADMIN` ou `BIBLIOTHECAIRE`; les emprunts acceptent aussi `ENSEIGNANT`. Une session sans agent métier actif est refusée par défaut.
+
+Les tables techniques Better Auth (`user`, `session`, `account`, `verification`) résident dans le schéma configurable `DATABASE_SCHEMA`, soit `eblon_bibliotheque` localement. Elles sont créées par `000005_authentification`, puis déplacées sans perte par `000006_deplacement_authentification`; aucune table d'authentification n'est créée dans `public`.
+
+```powershell
+docker compose up -d
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+
+pnpm test
+pnpm test:integration
+pnpm api:verify
+```
+
+Les tests d'intégration créent un schéma PostgreSQL temporaire `api_test_*`, appliquent les migrations, puis suppriment uniquement ce schéma. Ils ne modifient pas les données locales de développement. `pnpm api:verify` doit être lancé pendant que l'application fonctionne.
+
+Limite actuelle : les écrans historiques ne consomment pas encore cette API. Leur connexion constitue la phase suivante. Amazon Cognito et AWS restent hors périmètre.
+
 ## Incidents courants
 
 - **Port 5432 occupé** : modifier `POSTGRES_PORT` et le port de `DATABASE_URL`.
