@@ -23,7 +23,16 @@ export async function listerRessources(nom: NomRessource, pagination: Pagination
   const tri = pagination.tri && config.tri.includes(pagination.tri) ? pagination.tri : config.tri[0]
   const total = await pool.query<{ total: number }>(`SELECT count(*)::int total FROM ${schema()}.${nom} ${where}`, valeurs)
   valeurs.push(pagination.limite, (pagination.page - 1) * pagination.limite)
-  const rows = await pool.query(`SELECT * FROM ${schema()}.${nom} ${where} ORDER BY ${tri} ${pagination.ordre === "desc" ? "DESC" : "ASC"} LIMIT $${valeurs.length - 1} OFFSET $${valeurs.length}`, valeurs)
+  const selection = nom === "ouvrages"
+    ? `SELECT ouvrages.*,
+        count(exemplaires.id)::int nombre_exemplaires,
+        count(exemplaires.id) FILTER (WHERE exemplaires.statut='DISPONIBLE')::int nombre_disponibles,
+        count(exemplaires.id) FILTER (WHERE exemplaires.statut='EMPRUNTE')::int nombre_empruntes
+       FROM ${schema()}.ouvrages
+       LEFT JOIN ${schema()}.exemplaires ON exemplaires.ouvrage_id=ouvrages.id
+       ${where} GROUP BY ouvrages.id`
+    : `SELECT * FROM ${schema()}.${nom} ${where}`
+  const rows = await pool.query(`${selection} ORDER BY ${tri} ${pagination.ordre === "desc" ? "DESC" : "ASC"} LIMIT $${valeurs.length - 1} OFFSET $${valeurs.length}`, valeurs)
   return { donnees: rows.rows, total: total.rows[0]?.total ?? 0 }
 }
 export async function trouverRessource(nom: NomRessource, id: string) { return (await pool.query(`SELECT * FROM ${schema()}.${nom} WHERE id=$1`, [id])).rows[0] }
