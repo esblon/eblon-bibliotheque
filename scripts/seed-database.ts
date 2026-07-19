@@ -120,6 +120,90 @@ async function main() {
         date_modification = current_timestamp;
     `)
 
+    const matieresDeveloppement = [
+      { id: "10000000-0000-4000-8000-000000000001", code: "MATH", nom: "Mathématiques" },
+      { id: "10000000-0000-4000-8000-000000000002", code: "FR", nom: "Français" },
+      { id: "10000000-0000-4000-8000-000000000003", code: "EN", nom: "Anglais" },
+      { id: "10000000-0000-4000-8000-000000000004", code: "PHYS", nom: "Sciences physiques" },
+      { id: "10000000-0000-4000-8000-000000000005", code: "SVT", nom: "SVT" },
+      { id: "10000000-0000-4000-8000-000000000006", code: "HISTGEO", nom: "Histoire-Géographie" },
+    ]
+    const niveauxDeveloppement = [
+      { id: "20000000-0000-4000-8000-000000000001", code: "3E", nom: "3e" },
+      { id: "20000000-0000-4000-8000-000000000002", code: "TERM_A", nom: "Terminale A" },
+      { id: "20000000-0000-4000-8000-000000000003", code: "TERM_C", nom: "Terminale C" },
+      { id: "20000000-0000-4000-8000-000000000004", code: "TERM_D", nom: "Terminale D" },
+    ]
+    const collections = ["Révisions essentielles", "Annales corrigées", "Méthodes et exercices", "Objectif réussite", "Cours et applications", "Préparation intensive", "Fiches pratiques", "Sujets d’examen", "Approfondissement", "Entraînement complet"]
+
+    for (const [indexMatiere, matiere] of matieresDeveloppement.entries()) {
+      for (let indexOuvrage = 0; indexOuvrage < 10; indexOuvrage += 1) {
+        const numero = indexMatiere * 100 + indexOuvrage + 1
+        const id = `31000000-0000-4000-8000-${String(numero).padStart(12, "0")}`
+        const niveau = indexOuvrage === 9 ? null : niveauxDeveloppement[(indexMatiere + indexOuvrage) % niveauxDeveloppement.length]
+        await client.query(`
+          INSERT INTO ${schema}.ouvrages (
+            id, titre, sous_titre, editeur, edition, annee_publication,
+            description, matiere_id, niveau_scolaire_id, est_actif
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true)
+          ON CONFLICT (id) DO UPDATE SET
+            titre=EXCLUDED.titre, sous_titre=EXCLUDED.sous_titre,
+            editeur=EXCLUDED.editeur, edition=EXCLUDED.edition,
+            annee_publication=EXCLUDED.annee_publication,
+            description=EXCLUDED.description, matiere_id=EXCLUDED.matiere_id,
+            niveau_scolaire_id=EXCLUDED.niveau_scolaire_id, est_actif=true,
+            date_modification=current_timestamp
+        `, [id, `${collections[indexOuvrage]} — ${matiere.nom}`, niveau?.nom??"Tous niveaux", "Éditions Ivoire Savoir", "Développement 2026", 2026, "Ouvrage entièrement fictif destiné au développement local.", matiere.id, niveau?.id??null])
+
+        const exemplaireId = `41000000-0000-4000-8000-${String(numero).padStart(12, "0")}`
+        const codeInventaire = `DEV-GEN-${matiere.code}-${String(indexOuvrage + 1).padStart(3, "0")}`
+        await client.query(`
+          INSERT INTO ${schema}.exemplaires (
+            id, ouvrage_id, code_inventaire, code_qr, statut,
+            date_acquisition, observations
+          ) VALUES ($1,$2,$3,$4,'DISPONIBLE',current_date,$5)
+          ON CONFLICT (id) DO UPDATE SET
+            ouvrage_id=EXCLUDED.ouvrage_id,
+            code_inventaire=EXCLUDED.code_inventaire,
+            code_qr=EXCLUDED.code_qr,
+            statut=CASE
+              WHEN exemplaires.statut='EMPRUNTE' THEN exemplaires.statut
+              ELSE 'DISPONIBLE'
+            END,
+            observations=EXCLUDED.observations,
+            date_modification=current_timestamp
+        `, [exemplaireId, id, codeInventaire, `DEV-QR-GEN-${matiere.code}-${String(indexOuvrage + 1).padStart(3, "0")}`, "Exemplaire fictif généré pour les essais de prêt."])
+      }
+    }
+
+    const identitesIvoiriennes = [
+      ["Aïcha","Koné"],["Yannick","Kouassi"],["Nadia","Yao"],["Ismaël","Traoré"],["Grâce","N’Guessan"],
+      ["Mariam","Ouattara"],["Kevin","Amani"],["Fatou","Bamba"],["Arnaud","Koffi"],["Clarisse","Assi"],
+      ["Moussa","Coulibaly"],["Esther","Ahoua"],["Jean-Marc","Gnahoré"],["Aminata","Fofana"],["Emmanuel","Dago"],
+      ["Rokia","Diabaté"],["Wilfried","Zadi"],["Prisca","Adou"],["Souleymane","Bakayoko"],["Christelle","N’Dri"],
+    ]
+    let indexIdentite = 0
+    for (const [indexNiveau, niveau] of niveauxDeveloppement.entries()) {
+      for (let position = 0; position < 5; position += 1) {
+        const [prenom, nom] = identitesIvoiriennes[indexIdentite]
+        const numero = indexNiveau * 10 + position + 1
+        const id = `51000000-0000-4000-8000-${String(numero).padStart(12, "0")}`
+        await client.query(`
+          INSERT INTO ${schema}.emprunteurs (
+            id, numero_emprunteur, prenom, nom, niveau_scolaire_id,
+            classe, etablissement, statut
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,'ACTIF')
+          ON CONFLICT (id) DO UPDATE SET
+            numero_emprunteur=EXCLUDED.numero_emprunteur,
+            prenom=EXCLUDED.prenom, nom=EXCLUDED.nom,
+            niveau_scolaire_id=EXCLUDED.niveau_scolaire_id,
+            classe=EXCLUDED.classe, etablissement=EXCLUDED.etablissement,
+            statut='ACTIF', date_modification=current_timestamp
+        `, [id, `DEV-${niveau.code}-ELV-${String(position+1).padStart(2,"0")}`, prenom, nom, niveau.id, niveau.nom, "Lycée fictif de développement"])
+        indexIdentite += 1
+      }
+    }
+
     await client.query("COMMIT")
     console.log("Development seed data: OK")
   } catch (error) {

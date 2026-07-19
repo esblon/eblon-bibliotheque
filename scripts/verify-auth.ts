@@ -27,11 +27,20 @@ async function main() {
     }
     const publicAuth = await client.query(`SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name=ANY($1::text[])`, [Object.keys(required)])
     if (publicAuth.rowCount) throw new Error("Tables Better Auth présentes dans public")
-    const incoherent = await client.query<{ count: number }>(`SELECT count(*)::int count FROM "${DATABASE_SCHEMA}"."user" u LEFT JOIN "${DATABASE_SCHEMA}".agents a ON a.identifiant_auth_externe=u.id WHERE a.id IS NULL`)
-    if ((incoherent.rows[0]?.count ?? 0) > 0) throw new Error("Utilisateur Better Auth sans agent associé")
+    const associations = await client.query<{ orphelins: number; doubles: number }>(`
+      SELECT
+        count(*) FILTER (WHERE a.id IS NULL AND e.id IS NULL)::int AS orphelins,
+        count(*) FILTER (WHERE a.id IS NOT NULL AND e.id IS NOT NULL)::int AS doubles
+      FROM "${DATABASE_SCHEMA}"."user" u
+      LEFT JOIN "${DATABASE_SCHEMA}".agents a ON a.identifiant_auth_externe = u.id
+      LEFT JOIN "${DATABASE_SCHEMA}".emprunteurs e ON e.identifiant_auth_externe = u.id
+    `)
+    const { orphelins = 0, doubles = 0 } = associations.rows[0] ?? {}
+    if (orphelins > 0) throw new Error(`${orphelins} utilisateur(s) Better Auth sans agent ni emprunteur associé`)
+    if (doubles > 0) throw new Error(`${doubles} utilisateur(s) Better Auth associé(s) à la fois à un agent et à un emprunteur`)
     const session = await auth.api.getSession({ headers: new Headers() })
     if (session !== null) throw new Error("Lecture anonyme de session incohérente")
-    console.log("Vérification Better Auth: OK (configuration, search_path, tables, session et agents cohérents)")
+    console.log("Vérification Better Auth: OK (configuration, search_path, tables, session et identités agent/élève cohérentes)")
   } finally { await client.end() }
 }
 main().catch((error) => { console.error(error instanceof Error ? error.message : "Échec de la vérification Better Auth"); process.exitCode = 1 })

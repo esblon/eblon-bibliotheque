@@ -1,30 +1,4 @@
-import Link from "next/link"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { PageHeader } from "@/components/page-header"
-import { EmpruntsTable } from "@/components/emprunts-table"
-import { getEmprunts } from "@/app/actions/emprunts"
-import { getParametre } from "@/app/actions/parametres"
-
-export default async function EmpruntsPage() {
-  const [emprunts, etablissement] = await Promise.all([
-    getEmprunts(),
-    getParametre("nom_etablissement"),
-  ])
-
-  return (
-    <div className="grid gap-6">
-      <PageHeader
-        title="Emprunts"
-        description="Tous les emprunts, en cours et passés."
-        action={
-          <Button render={<Link href="/emprunts/nouveau" />} size="lg">
-            <Plus className="mr-2 size-4" />
-            Nouveau prêt
-          </Button>
-        }
-      />
-      <EmpruntsTable emprunts={emprunts} etablissement={etablissement} />
-    </div>
-  )
-}
+import { GestionEmpruntsApi } from "@/components/gestion-emprunts-api"
+import { autorisationsFrontend } from "@/lib/frontend-api/autorisation"
+import { apiFrontend } from "@/lib/frontend-api/ressources"
+export default async function Page(){const [p,e,b,a,o,d]=await Promise.all([apiFrontend.emprunts({limite:100}),apiFrontend.exemplaires({limite:100}),apiFrontend.emprunteurs({limite:100}),apiFrontend.agents({limite:100}),apiFrontend.ouvrages({limite:100}),autorisationsFrontend()]);const evenements=Object.fromEntries(await Promise.all(p.donnees.map(async x=>[x.id,(await apiFrontend.evenements(x.id)).donnees] as const)));return <GestionEmpruntsApi peutModifier={d.peutGererEmprunts} emprunts={p.donnees} exemplaires={e.donnees} emprunteurs={b.donnees} agents={a.donnees} ouvrages={o.donnees} evenements={evenements}/>}

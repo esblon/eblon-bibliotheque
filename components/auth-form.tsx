@@ -3,7 +3,6 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,7 +12,6 @@ import { BookMarked } from "lucide-react"
 import { InstallApp } from "@/components/install-app"
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
-  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -33,13 +31,16 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     setError(null)
     setLoading(true)
 
-    const { error } = isSignUp
-      ? await authClient.signUp.email({ email, password, name })
-      : await authClient.signIn.email({ email, password })
+    try {
+      const { error } = isSignUp
+        ? await authClient.signUp.email({ email, password, name })
+        : await authClient.signIn.email({ email, password })
 
-    setLoading(false)
+      if (!error) {
+        window.location.assign("/apres-connexion")
+        return
+      }
 
-    if (error) {
       const message = error.message?.toLowerCase() ?? ""
       setError(
         error.message === "Invalid email or password"
@@ -52,11 +53,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
                 ? "Le service d’authentification est temporairement indisponible"
                 : (error.message ?? "Une erreur interne est survenue"),
       )
-      return
+    } catch {
+      setError("La connexion n’a pas pu être finalisée. Réessayez.")
+    } finally {
+      setLoading(false)
     }
-
-    router.push("/")
-    router.refresh()
   }
 
   return (
