@@ -12,7 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { BookMarked, LogOut, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type AppUser = { name: string; email: string; role: string }
+type AppUser = {
+  name: string
+  email: string
+  role: "ADMIN" | "ENSEIGNANT" | "BIBLIOTHECAIRE" | "LECTEUR"
+}
 
 function NavLinks({
   pathname,
@@ -81,7 +85,12 @@ export function AppShell({
     router.refresh()
   }
 
-  const roleLabel = user.role === "admin" ? "Administrateur" : "Professeur"
+  const roleLabel = {
+    ADMIN: "Administrateur",
+    ENSEIGNANT: "Enseignant",
+    BIBLIOTHECAIRE: "Bibliothécaire",
+    LECTEUR: "Lecteur",
+  }[user.role]
 
   const UserFooter = (
     <div className="border-t border-border p-3">
