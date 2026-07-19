@@ -5,6 +5,21 @@ import { Resend } from "resend"
 // "Eblon Mini Biblio LMF <no-reply@votre-domaine.com>".
 const FROM = process.env.EMAIL_FROM || "Eblon Mini Biblio LMF <onboarding@resend.dev>"
 
+export class ErreurEnvoiEmail extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "ErreurEnvoiEmail"
+  }
+}
+
+function expliquerErreurResend(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? ""
+  if (message.includes("domain") || message.includes("from")) return "L’adresse EMAIL_FROM doit appartenir à un domaine vérifié dans Resend."
+  if (message.includes("only send") || message.includes("testing emails")) return "Resend est en mode test : vérifiez un domaine pour envoyer une invitation à cette adresse."
+  if (message.includes("api key") || message.includes("unauthorized")) return "La clé RESEND_API_KEY est invalide ou ne permet pas l’envoi d’emails."
+  return "Resend a refusé l’envoi de l’email. Vérifiez le domaine expéditeur et le destinataire."
+}
+
 export async function sendResetPasswordEmail(to: string, resetUrl: string) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   const { error } = await resend.emails.send({
@@ -32,12 +47,12 @@ export async function sendResetPasswordEmail(to: string, resetUrl: string) {
 
   if (error) {
     console.error("Resend error:", error)
-    throw new Error("Échec de l'envoi de l'email de réinitialisation.")
+    throw new ErreurEnvoiEmail(expliquerErreurResend(error))
   }
 }
 
 export async function sendAgentInvitationEmail(to:string,prenom:string,activationUrl:string){
   const resend=new Resend(process.env.RESEND_API_KEY)
   const {error}=await resend.emails.send({from:FROM,to,subject:"Activez votre accès — Eblon Mini Biblio LMF",html:`<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1f2937"><h2 style="color:#2563eb">Eblon Mini Biblio LMF</h2><p>Bonjour ${prenom},</p><p>Votre accès à la bibliothèque a été créé. Ce lien personnel est valable 24 heures et ne peut être utilisé qu’une fois.</p><p style="text-align:center;margin:28px"><a href="${activationUrl}" style="background:#2563eb;color:white;text-decoration:none;padding:12px 24px;border-radius:8px">Définir mon mot de passe</a></p><p style="font-size:13px;color:#6b7280;word-break:break-all">${activationUrl}</p></div>`})
-  if(error)throw new Error("Échec de l’envoi de l’invitation")
+  if(error){console.error("Resend invitation error:",error);throw new ErreurEnvoiEmail(expliquerErreurResend(error))}
 }

@@ -7,12 +7,13 @@ import { messageErreur } from "@/lib/frontend-api/erreurs"
 import { schemasFormulaires, type RessourceEditable } from "@/lib/frontend-api/validation"
 import type { Agent, Emprunt } from "@/lib/frontend-api/types"
 import { inviterAgent } from "@/lib/invitations-agents"
+import { ErreurEnvoiEmail } from "@/lib/email"
 
 export type EtatAction = { succes:boolean; message:string; erreurs?:Record<string,string[]> }
 
 export async function envoyerInvitationAgent(id:string):Promise<EtatAction>{
  if(!process.env.RESEND_API_KEY)return{succes:false,message:"RESEND_API_KEY n’est pas configurée."}
- try{const agent=await apiFrontend.detail<Agent>("agents",id);if(agent.donnees.identifiant_auth_externe)return{succes:false,message:"Cet agent possède déjà un compte actif."};await inviterAgent(agent.donnees);return{succes:true,message:"Invitation envoyée."}}catch(e){return{succes:false,message:messageErreur(e)}}
+ try{const agent=await apiFrontend.detail<Agent>("agents",id);if(agent.donnees.identifiant_auth_externe)return{succes:false,message:"Cet agent possède déjà un compte actif."};await inviterAgent(agent.donnees);return{succes:true,message:"Invitation envoyée."}}catch(e){return{succes:false,message:e instanceof ErreurEnvoiEmail?e.message:messageErreur(e)}}
 }
 
 export async function enregistrerRessource(ressource:RessourceEditable,id:string|null,valeurs:unknown):Promise<EtatAction> {
