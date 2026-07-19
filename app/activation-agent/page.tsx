@@ -1,0 +1,4 @@
+import { Card } from "@/components/ui/card"
+import { ActivationAgentForm } from "@/components/activation-agent-form"
+import { verifierInvitation } from "@/lib/invitations-agents"
+export default async function Page({searchParams}:{searchParams:Promise<{jeton?:string}>}){const{jeton}=await searchParams;const invitation=jeton?await verifierInvitation(jeton):null;return <main className="flex min-h-svh items-center justify-center bg-muted p-4"><Card className="w-full max-w-md p-6"><h1 className="text-xl font-semibold">Activation de votre accès</h1>{invitation?<><p className="my-4 text-sm text-muted-foreground">Bonjour {invitation.prenom}, définissez votre mot de passe personnel.</p><ActivationAgentForm jeton={jeton!} email={invitation.email}/></>:<p role="alert" className="mt-4 text-destructive">Ce lien est invalide, expiré ou déjà utilisé.</p>}</Card></main>}

@@ -165,7 +165,40 @@ pnpm api:verify
 
 Les tests d'intégration créent un schéma PostgreSQL temporaire `api_test_*`, appliquent les migrations, puis suppriment uniquement ce schéma. Ils ne modifient pas les données locales de développement. `pnpm api:verify` doit être lancé pendant que l'application fonctionne.
 
-Limite actuelle : les écrans historiques ne consomment pas encore cette API. Leur connexion constitue la phase suivante. Amazon Cognito et AWS restent hors périmètre.
+## Frontend connecté à l’API
+
+Les écrans `matieres`, `niveaux-scolaires`, `ouvrages`, `exemplaires`, `emprunteurs`, `agents` et `emprunts` consomment exclusivement `/api/v1` via `lib/frontend-api`. Cette couche relaie le cookie Better Auth côté serveur, désactive le cache pour les données métier et transforme les erreurs HTTP en messages d’interface sans exposer de détails techniques. Les mutations utilisent des Server Actions validées avec Zod, puis invalident les pages concernées.
+
+Les anciens liens `/livres`, `/eleves`, `/retards` et `/statistiques` redirigent vers les écrans métier actuels. Le tableau de bord calcule ses indicateurs à partir des ressources API existantes, sans nouvel endpoint agrégé.
+
+```powershell
+docker compose up -d
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
+Dans un second terminal :
+
+```powershell
+pnpm api:verify
+pnpm test
+pnpm test:integration
+```
+
+Les agents `LECTEUR` disposent d’une interface en lecture seule. Les actions de création et modification sont réservées aux rôles autorisés et l’API contrôle systématiquement chaque opération.
+
+Amazon Cognito, AWS et le tunnel HTTPS restent hors périmètre.
+
+## Comptes agents et élèves
+
+- Un agent est créé par un administrateur. Le bouton **Envoyer l’invitation** génère un jeton haché valable 24 heures et envoie un lien `/activation-agent`. Le nom, le prénom et le rôle définis par l’administrateur sont conservés.
+- Un élève s’inscrit librement sur `/sign-up`, choisit son niveau et accède ensuite à `/espace-eleve`.
+- L’espace élève expose uniquement son profil, ses prêts et les ouvrages de son niveau ou sans niveau scolaire.
+- Les routes privées correspondantes sont `/api/v1/mon-profil`, `/api/v1/mes-emprunts` et `/api/v1/mon-catalogue`.
+- Une adresse déjà enregistrée comme agent ne peut pas utiliser l’inscription élève : elle doit passer par son invitation.
+
+Pour envoyer les invitations, renseigner `RESEND_API_KEY` et `EMAIL_FROM`. En local, l’URL des liens repose sur `BETTER_AUTH_URL`.
 
 ## Incidents courants
 

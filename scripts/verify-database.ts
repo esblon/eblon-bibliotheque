@@ -38,7 +38,7 @@ async function main() {
       [DATABASE_SCHEMA],
     )
     const tables = new Set(tableResult.rows.map(({ table_name }) => table_name))
-    const manquantes = [...TABLES_METIER, "statut_fondation", "migrations_eblon_bibliotheque", "parametres_application"].filter((t) => !tables.has(t))
+    const manquantes = [...TABLES_METIER, "statut_fondation", "migrations_eblon_bibliotheque", "parametres_application", "invitations_agents"].filter((t) => !tables.has(t))
     const anciennes = ANCIENNES_TABLES.filter((t) => tables.has(t))
     if (manquantes.length) throw new Error(`Tables manquantes: ${manquantes.join(", ")}`)
     if (anciennes.length) throw new Error(`Anciennes tables restantes: ${anciennes.join(", ")}`)
@@ -46,8 +46,8 @@ async function main() {
     const migrations = await client.query<{ name: string; occurrences: number }>(
       `SELECT name, count(*)::int AS occurrences FROM ${schema}.migrations_eblon_bibliotheque GROUP BY name ORDER BY name`,
     )
-    if (migrations.rows.length !== 7 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
-        migrations.rows.at(-1)?.name !== "000007_parametres_application") {
+    if (migrations.rows.length !== 8 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
+        migrations.rows.at(-1)?.name !== "000008_acces_eleves_invitations_agents") {
       throw new Error("Historique des migrations incohérent")
     }
 
@@ -90,7 +90,7 @@ async function main() {
     const brokenRelations = await client.query<{ count: number }>(`
       SELECT count(*)::int AS count FROM ${schema}.exemplaires e LEFT JOIN ${schema}.ouvrages o ON o.id=e.ouvrage_id WHERE o.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.matieres m ON m.id=o.matiere_id WHERE m.id IS NULL
-      UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.niveaux_scolaires n ON n.id=o.niveau_scolaire_id WHERE n.id IS NULL`)
+      UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.niveaux_scolaires n ON n.id=o.niveau_scolaire_id WHERE o.niveau_scolaire_id IS NOT NULL AND n.id IS NULL`)
     if (brokenRelations.rows.some(({ count }) => count !== 0)) throw new Error("Relations orphelines détectées")
 
     const publicTables = await client.query(
@@ -98,7 +98,7 @@ async function main() {
       [[...TABLES_METIER, ...ANCIENNES_TABLES, "user", "session", "account", "verification"]],
     )
     if (publicTables.rowCount) throw new Error("Tables métier présentes dans public")
-    console.log("Vérification PostgreSQL: OK (modèle français, authentification, 7 migrations uniques, seed cohérent, relations intactes)")
+    console.log("Vérification PostgreSQL: OK (modèle français, authentification, 8 migrations uniques, seed cohérent, relations intactes)")
   } finally {
     await client.end()
   }

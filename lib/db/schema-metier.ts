@@ -20,7 +20,7 @@ export const ouvrages = schemaMetier.table("ouvrages", {
   id: uuid("id").primaryKey(), titre: text("titre").notNull(), sousTitre: text("sous_titre"), isbn: text("isbn"),
   editeur: text("editeur"), edition: text("edition"), anneePublication: integer("annee_publication"),
   description: text("description"), matiereId: uuid("matiere_id").notNull().references(() => matieres.id),
-  niveauScolaireId: uuid("niveau_scolaire_id").notNull().references(() => niveauxScolaires.id),
+  niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id),
   cleImageCouverture: text("cle_image_couverture"), estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
 })
 export const exemplaires = schemaMetier.table("exemplaires", {
@@ -31,7 +31,7 @@ export const exemplaires = schemaMetier.table("exemplaires", {
 })
 export const emprunteurs = schemaMetier.table("emprunteurs", {
   id: uuid("id").primaryKey(), numeroEmprunteur: text("numero_emprunteur").notNull().unique(), prenom: text("prenom").notNull(),
-  nom: text("nom").notNull(), email: text("email"), telephone: text("telephone"),
+  nom: text("nom").notNull(), email: text("email"), telephone: text("telephone"), identifiantAuthExterne: text("identifiant_auth_externe"),
   niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id), classe: text("classe"),
   etablissement: text("etablissement"), statut: text("statut").notNull().default("ACTIF"), ...datesModifiables,
 })

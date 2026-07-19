@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { BookMarked } from "lucide-react"
 import { InstallApp } from "@/components/install-app"
+import { destinationApresConnexion } from "@/app/actions/parcours-auth"
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter()
@@ -55,7 +56,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       return
     }
 
-    router.push("/")
+    router.push(await destinationApresConnexion())
     router.refresh()
   }
 
