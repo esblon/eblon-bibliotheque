@@ -1,5 +1,6 @@
 import "server-only"
 import { headers } from "next/headers"
+import { redirect } from "next/navigation"
 import { convertirErreur } from "./erreurs"
 import type { ParametresListe, ReponseApi } from "./types"
 
@@ -18,6 +19,8 @@ export async function appelerApi<T>(chemin:string, options:RequestInit = {}, par
   } catch (cause) {
     throw new Error("API métier indisponible", { cause })
   }
+  if (reponse.status === 401) redirect("/sign-in")
+  if (reponse.status === 403) redirect("/espace-eleve")
   if (!reponse.ok) throw await convertirErreur(reponse)
   return reponse.json() as Promise<ReponseApi<T>>
 }
