@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card"
 import { BookMarked } from "lucide-react"
 import { InstallApp } from "@/components/install-app"
 
-export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
+export function AuthForm({ mode, publicSignupEnabled = true }: { mode: "sign-in" | "sign-up"; publicSignupEnabled?: boolean }) {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -173,12 +173,12 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
         <p className="text-sm text-muted-foreground text-center mt-6">
           {isSignUp ? "Vous avez déjà un compte ? " : "Pas encore de compte ? "}
-          <Link
+          {(isSignUp || publicSignupEnabled) && <Link
             href={isSignUp ? "/sign-in" : "/sign-up"}
             className="text-foreground font-medium underline-offset-4 hover:underline"
           >
             {isSignUp ? "Se connecter" : "Créer un compte"}
-          </Link>
+          </Link>}
         </p>
       </Card>
 

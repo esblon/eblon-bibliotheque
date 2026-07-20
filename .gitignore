@@ -20,3 +20,7 @@ coverage/
 *.tsbuildinfo
 *.log
 .DS_Store
+*.dump
+*.sql.gz
+deploy/uat/*.env
+deploy/uat/runtime/

@@ -1,0 +1,1 @@
+export function assertDevSeedAllowed(environment:Record<string,string|undefined>=process.env){if(environment.NODE_ENV==="production")throw new Error("Le seed de développement est interdit en production");if(environment.ALLOW_DEV_SEED!=="true")throw new Error("Seed refusé: définissez explicitement ALLOW_DEV_SEED=true")}

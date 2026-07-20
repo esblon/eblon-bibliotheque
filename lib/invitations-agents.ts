@@ -8,6 +8,7 @@ const empreinte=(jeton:string)=>createHash("sha256").update(jeton).digest("hex")
 const schema=()=>`"${parseServerEnvironment().DATABASE_SCHEMA}"`
 
 export async function inviterAgent(agent:{id:string;email:string;prenom:string}){
+ parseServerEnvironment()
  const jeton=randomBytes(32).toString("base64url"),expiration=new Date(Date.now()+24*60*60*1000)
  const client=await pool.connect();await client.query("BEGIN")
  try{
