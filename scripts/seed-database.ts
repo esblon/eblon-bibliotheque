@@ -1,7 +1,9 @@
 import { Client } from "pg"
 import { parseServerEnvironment } from "../config/env"
+import { assertDevSeedAllowed } from "../lib/dev-seed"
 
 async function main() {
+  assertDevSeedAllowed()
   const { DATABASE_URL, DATABASE_SCHEMA } = parseServerEnvironment()
   const client = new Client({ connectionString: DATABASE_URL })
   const schema = `"${DATABASE_SCHEMA}"`

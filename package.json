@@ -10,12 +10,13 @@
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "test:integration": "vitest run --config vitest.integration.config.ts",
-        "api:verify": "tsx --env-file=.env scripts/verify-api.ts",
-        "auth:verify": "tsx --env-file=.env scripts/verify-auth.ts",
-        "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
-        "db:seed": "tsx --env-file=.env scripts/seed-database.ts",
-        "db:tables": "tsx --env-file=.env scripts/list-tables.ts",
-        "db:verify": "tsx --env-file=.env scripts/verify-database.ts"
+        "api:verify": "tsx --env-file-if-exists=.env scripts/verify-api.ts",
+        "auth:verify": "tsx --env-file-if-exists=.env scripts/verify-auth.ts",
+        "admin:bootstrap": "tsx --env-file-if-exists=.env scripts/bootstrap-admin.ts",
+        "db:migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
+        "db:seed": "tsx --env-file-if-exists=.env scripts/seed-database.ts",
+        "db:tables": "tsx --env-file-if-exists=.env scripts/list-tables.ts",
+        "db:verify": "tsx --env-file-if-exists=.env scripts/verify-database.ts"
     },
     "dependencies": {
         "@base-ui/react": "^1.5.0",

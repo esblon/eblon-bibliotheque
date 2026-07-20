@@ -1,5 +1,34 @@
 # EBLON BIBLIOTHÈQUE
 
+> Déploiement UAT sécurisé : voir la section « Déploiement UAT conteneurisé » en fin de document.
+
+## Déploiement UAT conteneurisé
+
+Le flux UAT est : Internet → Caddy (ports publics 80/443) → Next.js (`app:3000`, réseau frontal) → PostgreSQL (`postgres:5432`, réseau backend interne). PostgreSQL ne publie aucun port hôte, Caddy ne rejoint pas le backend et les données PostgreSQL/Caddy utilisent des volumes persistants sur l’EBS.
+
+Construire et valider :
+
+```bash
+docker build --target runtime --build-arg NEXT_PUBLIC_APP_URL=https://uat.biblio.blon-enterprises.com -t eblon-bibliotheque:uat .
+docker compose --env-file /opt/blon/bibliotheque/runtime/app.env -f deploy/uat/compose.yaml config
+docker compose --env-file /opt/blon/bibliotheque/runtime/app.env -f deploy/uat/compose.yaml run --rm migrate
+docker compose --env-file /opt/blon/bibliotheque/runtime/app.env -f deploy/uat/compose.yaml up -d app caddy
+```
+
+Le fichier runtime réel reste hors Git dans `/opt/blon/bibliotheque/runtime/app.env`, d’après `deploy/uat/app.env.example`. Les secrets viendront de SSM Parameter Store `SecureString`. Le service ponctuel `migrate` exécute `pnpm db:migrate` puis `pnpm db:verify`; le conteneur web ne migre pas automatiquement. Aucun seed n’est exécuté en UAT.
+
+Le premier compte n’est jamais administrateur automatiquement. Le bootstrap ciblé et idempotent s’exécute ponctuellement avec `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME` et `BOOTSTRAP_ADMIN_PASSWORD` :
+
+```bash
+pnpm admin:bootstrap
+```
+
+Ces variables ne sont pas requises au démarrage et doivent être retirées après usage. Better Auth crée les identifiants; aucun mot de passe ou hash artisanal n’est écrit en SQL. `PUBLIC_SIGNUP_ENABLED=false` bloque l’inscription publique côté serveur sans bloquer la connexion. `EMAIL_ENABLED=false` désactive proprement les envois; avec `true`, `RESEND_API_KEY` et `EMAIL_FROM` deviennent obligatoires.
+
+Le seed `DEV-*` est toujours interdit avec `NODE_ENV=production` et exige `ALLOW_DEV_SEED=true` en développement. Pour un rollback, redéployer l’image ECR précédente; ne jamais supprimer le volume PostgreSQL. Toute migration descendante exige sauvegarde et validation explicites. Les contrôles de santé sont `/api/health` et `pg_isready`.
+
+Validations locales : `pnpm install --frozen-lockfile`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, validation Compose et `git diff --check`.
+
 Fondation locale Next.js, React, TypeScript strict et PostgreSQL, portable vers AWS.
 
 ## Prérequis

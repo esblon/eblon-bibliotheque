@@ -74,6 +74,7 @@ async function main() {
     )
     if (englishObjects.rowCount) throw new Error(`Objets métier anglais restants: ${englishObjects.rows.map(({ name }) => name).join(", ")}`)
 
+    if (process.env.NODE_ENV !== "production") {
     const seed = await client.query<{ matieres: number; niveaux: number; ouvrages: number; exemplaires: number; emprunteurs: number; agents: number }>(`
       SELECT
         (SELECT count(*)::int FROM ${schema}.matieres WHERE id::text LIKE '10000000-%') matieres,
@@ -87,6 +88,8 @@ async function main() {
       throw new Error("Données de seed incomplètes")
     }
 
+    }
+
     const brokenRelations = await client.query<{ count: number }>(`
       SELECT count(*)::int AS count FROM ${schema}.exemplaires e LEFT JOIN ${schema}.ouvrages o ON o.id=e.ouvrage_id WHERE o.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.matieres m ON m.id=o.matiere_id WHERE m.id IS NULL
@@ -98,7 +101,7 @@ async function main() {
       [[...TABLES_METIER, ...ANCIENNES_TABLES, "user", "session", "account", "verification"]],
     )
     if (publicTables.rowCount) throw new Error("Tables métier présentes dans public")
-    console.log("Vérification PostgreSQL: OK (modèle français, authentification, 8 migrations uniques, seed cohérent, relations intactes)")
+    console.log(`Vérification PostgreSQL: OK (modèle français, authentification, 8 migrations uniques, relations intactes${process.env.NODE_ENV === "production" ? ", seed UAT non requis" : ", seed local cohérent"})`)
   } finally {
     await client.end()
   }
