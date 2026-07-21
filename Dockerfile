@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM node:22.22.0-alpine3.23 AS base
+FROM node:22.23.1-alpine3.23 AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
@@ -25,7 +25,7 @@ COPY migrations ./migrations
 COPY scripts/migrate.ts scripts/verify-database.ts ./scripts/
 CMD ["sh","-c","pnpm db:migrate && pnpm db:verify"]
 
-FROM node:22.22.0-alpine3.23 AS runtime
+FROM node:22.23.1-alpine3.23 AS runtime
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
