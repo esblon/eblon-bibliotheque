@@ -16,6 +16,15 @@ export const niveauxScolaires = schemaMetier.table("niveaux_scolaires", {
   id: uuid("id").primaryKey(), code: text("code").notNull().unique(), nom: text("nom").notNull(),
   estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
 })
+export const classesScolaires = schemaMetier.table("classes_scolaires", {
+  id: uuid("id").primaryKey(), niveauScolaireId: uuid("niveau_scolaire_id").notNull().references(() => niveauxScolaires.id),
+  code: text("code").notNull().unique(), nom: text("nom").notNull(), ordre: integer("ordre").notNull(),
+  estActive: boolean("est_active").notNull().default(true), ...datesModifiables,
+})
+export const etablissements = schemaMetier.table("etablissements", {
+  id: uuid("id").primaryKey(), code: text("code").notNull().unique(), nom: text("nom").notNull().unique(),
+  estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
+})
 export const ouvrages = schemaMetier.table("ouvrages", {
   id: uuid("id").primaryKey(), titre: text("titre").notNull(), sousTitre: text("sous_titre"), isbn: text("isbn"),
   editeur: text("editeur"), edition: text("edition"), anneePublication: integer("annee_publication"),
@@ -32,8 +41,8 @@ export const exemplaires = schemaMetier.table("exemplaires", {
 export const emprunteurs = schemaMetier.table("emprunteurs", {
   id: uuid("id").primaryKey(), numeroEmprunteur: text("numero_emprunteur").notNull().unique(), prenom: text("prenom").notNull(),
   nom: text("nom").notNull(), email: text("email"), telephone: text("telephone"), identifiantAuthExterne: text("identifiant_auth_externe"),
-  niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id), classe: text("classe"),
-  etablissement: text("etablissement"), statut: text("statut").notNull().default("ACTIF"), ...datesModifiables,
+  niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id), classeScolaireId: uuid("classe_scolaire_id").references(() => classesScolaires.id), classe: text("classe"),
+  etablissementId: uuid("etablissement_id").references(() => etablissements.id), etablissement: text("etablissement"), statut: text("statut").notNull().default("ACTIF"), ...datesModifiables,
 })
 export const agents = schemaMetier.table("agents", {
   id: uuid("id").primaryKey(), identifiantAuthExterne: text("identifiant_auth_externe").unique(),
