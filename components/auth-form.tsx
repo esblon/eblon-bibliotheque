@@ -68,20 +68,19 @@ export function AuthForm({ mode, publicSignupEnabled = true }: { mode: "sign-in"
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            Eblon Mini Biblio LMF
+            Bibliothèque Ebene BLON
           </h1>
           <p className="text-sm font-medium text-foreground/80">
             Lycée Moderne Facobly
           </p>
           <p className="text-sm text-muted-foreground">
-            Gestion de la mini-bibliothèque scolaire
+            Gestion de la Bibliothèque
           </p>
         </div>
       </div>
 
       <p className="mb-6 max-w-sm text-center text-sm leading-relaxed text-muted-foreground text-pretty">
-        Bienvenue sur l&apos;espace de gestion de la mini-bibliothèque du Lycée
-        Moderne Facobly. Cette application est réservée à l&apos;équipe
+        Bienvenue sur l&apos;espace de gestion de la bibliothèque. Cette application est réservée à l&apos;équipe
         pédagogique pour le suivi des livres, des élèves et des prêts.
       </p>
 

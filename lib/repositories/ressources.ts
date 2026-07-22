@@ -8,6 +8,9 @@ type Configuration = { recherche: string[]; tri: string[]; filtres: string[] }
 export const configurations: Record<NomRessource, Configuration> = {
   matieres: { recherche: ["code","nom"], tri: ["code","nom","date_creation"], filtres: ["est_active"] },
   niveaux_scolaires: { recherche: ["code","nom"], tri: ["code","nom","date_creation"], filtres: ["est_actif"] },
+  classes_scolaires: { recherche: ["code","nom"], tri: ["ordre","code","nom"], filtres: ["niveau_scolaire_id","est_active"] },
+  etablissements: { recherche: ["code","nom","type_etablissement"], tri: ["nom","code","type_etablissement"], filtres: ["type_etablissement","est_actif"] },
+  roles_agents: { recherche: ["code","nom","description"], tri: ["code","nom"], filtres: ["est_actif"] },
   ouvrages: { recherche: ["titre","isbn"], tri: ["titre","annee_publication","date_creation"], filtres: ["matiere_id","niveau_scolaire_id","isbn","est_actif"] },
   exemplaires: { recherche: ["code_inventaire","code_qr"], tri: ["code_inventaire","statut","date_creation"], filtres: ["ouvrage_id","code_inventaire","code_qr","statut"] },
   emprunteurs: { recherche: ["numero_emprunteur","nom","prenom","classe","etablissement"], tri: ["nom","prenom","numero_emprunteur","date_creation"], filtres: ["numero_emprunteur","nom","prenom","classe","etablissement","niveau_scolaire_id","statut"] },

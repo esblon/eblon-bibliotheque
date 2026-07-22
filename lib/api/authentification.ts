@@ -13,7 +13,7 @@ export async function exigerIdentite(roles?: RoleAgent[]): Promise<IdentiteApi> 
   if (!session?.user?.email) throw new ErreurApi("NON_AUTHENTIFIE", "Authentification requise", 401)
   const { DATABASE_SCHEMA } = parseServerEnvironment()
   const result = await pool.query<IdentiteApi>(
-    `SELECT id AS agent_id, role, email FROM "${DATABASE_SCHEMA}".agents WHERE lower(email)=lower($1) AND statut='ACTIF'`, [session.user.email],
+    `SELECT a.id AS agent_id,r.role_base AS role,a.email FROM "${DATABASE_SCHEMA}".agents a JOIN "${DATABASE_SCHEMA}".roles_agents r ON r.code=a.role AND r.est_actif WHERE lower(a.email)=lower($1) AND a.statut='ACTIF'`, [session.user.email],
   )
   const identite = result.rows[0]
   if (!identite || !roleAutorise(identite.role, roles)) throw new ErreurApi("ACCES_INTERDIT", "Accès interdit", 403)

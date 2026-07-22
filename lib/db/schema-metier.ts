@@ -23,13 +23,14 @@ export const classesScolaires = schemaMetier.table("classes_scolaires", {
 })
 export const etablissements = schemaMetier.table("etablissements", {
   id: uuid("id").primaryKey(), code: text("code").notNull().unique(), nom: text("nom").notNull().unique(),
-  estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
+  typeEtablissement: text("type_etablissement").notNull(), estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
 })
+export const rolesAgents = schemaMetier.table("roles_agents", {id:uuid("id").primaryKey(),code:text("code").notNull().unique(),nom:text("nom").notNull().unique(),description:text("description"),roleBase:text("role_base").notNull(),estActif:boolean("est_actif").notNull().default(true),...datesModifiables})
 export const ouvrages = schemaMetier.table("ouvrages", {
   id: uuid("id").primaryKey(), titre: text("titre").notNull(), sousTitre: text("sous_titre"), isbn: text("isbn"),
   editeur: text("editeur"), edition: text("edition"), anneePublication: integer("annee_publication"),
   description: text("description"), matiereId: uuid("matiere_id").notNull().references(() => matieres.id),
-  niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id),
+  niveauScolaireId: uuid("niveau_scolaire_id").references(() => niveauxScolaires.id), classeScolaireId: uuid("classe_scolaire_id").references(() => classesScolaires.id),
   cleImageCouverture: text("cle_image_couverture"), estActif: boolean("est_actif").notNull().default(true), ...datesModifiables,
 })
 export const exemplaires = schemaMetier.table("exemplaires", {

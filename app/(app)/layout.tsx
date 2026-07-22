@@ -19,9 +19,9 @@ export default async function AppLayout({
     email: string
     role: "ADMIN" | "ENSEIGNANT" | "BIBLIOTHECAIRE" | "LECTEUR"
   }>(
-    `SELECT prenom, nom, email, role
-       FROM "${schema}".agents
-      WHERE identifiant_auth_externe = $1 AND statut = 'ACTIF'`,
+    `SELECT a.prenom,a.nom,a.email,r.role_base role
+       FROM "${schema}".agents a JOIN "${schema}".roles_agents r ON r.code=a.role AND r.est_actif
+      WHERE a.identifiant_auth_externe = $1 AND a.statut = 'ACTIF'`,
     [user.id],
   )).rows[0]
 
