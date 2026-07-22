@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1.7
 FROM node:22.22.0-alpine3.23 AS base
-RUN apk upgrade --no-cache
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
@@ -18,6 +17,7 @@ COPY . .
 RUN pnpm build
 
 FROM base AS migration
+RUN apk upgrade --no-cache
 ENV NODE_ENV=production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
