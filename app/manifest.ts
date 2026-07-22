@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Eblon Mini Biblio LMF — Lycée Moderne Facobly",
+    name: "Bibliothèque Ebene BLON",
     short_name: "Eblon Biblio LMF",
     description:
-      "Gestion de la mini-bibliothèque scolaire du Lycée Moderne Facobly : livres, élèves, prêts, retours, QR codes et statistiques.",
+      "Gestion de la Bibliothèque : livres, élèves, prêts, retours, QR codes et statistiques.",
     start_url: "/",
     scope: "/",
     display: "standalone",

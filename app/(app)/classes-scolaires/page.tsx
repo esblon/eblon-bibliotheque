@@ -1,0 +1,4 @@
+import { GestionRessource } from "@/components/gestion-ressource"
+import { apiFrontend } from "@/lib/frontend-api/ressources"
+import { autorisationsFrontend } from "@/lib/frontend-api/autorisation"
+export default async function Page(){const[c,n,d]=await Promise.all([apiFrontend.classes({limite:100}),apiFrontend.niveaux({limite:100}),autorisationsFrontend()]);return <GestionRessource peutModifier={d.agent?.role==="ADMIN"} ressource="classes-scolaires" titre="Classes" lignes={c.donnees} champs={[{nom:"niveau_scolaire_id",libelle:"Niveau scolaire",type:"select",options:n.donnees.map(x=>({valeur:x.id,libelle:x.nom}))},{nom:"code",libelle:"Code",requis:true},{nom:"nom",libelle:"Nom",requis:true},{nom:"ordre",libelle:"Ordre",type:"number",requis:true},{nom:"est_active",libelle:"Active",type:"checkbox"}]}/>}

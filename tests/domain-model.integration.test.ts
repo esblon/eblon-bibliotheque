@@ -78,7 +78,7 @@ describe.sequential("PostgreSQL domain model", () => {
   })
 
   it("expose uniquement les tables métier françaises", async () => {
-    const attendues = ["matieres", "niveaux_scolaires", "classes_scolaires", "etablissements", "ouvrages", "exemplaires", "emprunteurs", "agents", "emprunts", "evenements_emprunt"]
+    const attendues = ["matieres", "niveaux_scolaires", "classes_scolaires", "etablissements", "roles_agents", "ouvrages", "exemplaires", "emprunteurs", "agents", "emprunts", "evenements_emprunt"]
     const anciennes = ["subjects", "education_levels", "books", "book_copies", "borrowers", "staff_members", "loans", "loan_events"]
     const result = await client.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name = ANY($2::text[])`,

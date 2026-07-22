@@ -51,7 +51,7 @@ export function ForgotPasswordForm() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            Eblon Mini Biblio LMF
+            Bibliothèque Ebene BLON
           </h1>
           <p className="text-sm font-medium text-foreground/80">
             Lycée Moderne Facobly

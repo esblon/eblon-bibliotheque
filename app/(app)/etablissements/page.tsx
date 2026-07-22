@@ -1,0 +1,4 @@
+import { GestionRessource } from "@/components/gestion-ressource"
+import { apiFrontend } from "@/lib/frontend-api/ressources"
+import { autorisationsFrontend } from "@/lib/frontend-api/autorisation"
+export default async function Page(){const[r,d]=await Promise.all([apiFrontend.etablissements({limite:100}),autorisationsFrontend()]);return <GestionRessource peutModifier={d.agent?.role==="ADMIN"} ressource="etablissements" titre="Établissements" lignes={r.donnees} champs={[{nom:"code",libelle:"Code",requis:true},{nom:"nom",libelle:"Nom",requis:true},{nom:"type_etablissement",libelle:"Type",type:"select",options:[{valeur:"PERISCOLAIRE",libelle:"Périscolaire"},{valeur:"PRIMAIRE",libelle:"Primaire"},{valeur:"SECONDAIRE",libelle:"Secondaire"}]},{nom:"est_actif",libelle:"Actif",type:"checkbox"}]}/>}

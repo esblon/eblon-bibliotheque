@@ -7,9 +7,9 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
-  title: "Eblon Mini Biblio LMF — Lycée Moderne Facobly",
+  title: "Bibliothèque Ebene BLON",
   description:
-    "Gestion des livres, élèves, prêts et retours de la mini-bibliothèque d'annales scolaires du Lycée Moderne Facobly, avec QR codes et statistiques.",
+    "Gestion de la Bibliothèque : livres, élèves, prêts, retours, QR codes et statistiques.",
   generator: "Next.js",
 }
 

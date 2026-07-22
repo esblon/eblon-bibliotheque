@@ -1,0 +1,4 @@
+import { GestionRessource } from "@/components/gestion-ressource"
+import { apiFrontend } from "@/lib/frontend-api/ressources"
+import { autorisationsFrontend } from "@/lib/frontend-api/autorisation"
+export default async function Page(){const[r,d]=await Promise.all([apiFrontend.roles({limite:100}),autorisationsFrontend()]);return <GestionRessource peutModifier={d.agent?.role==="ADMIN"} ressource="roles" titre="Rôles des agents" lignes={r.donnees} champs={[{nom:"code",libelle:"Code",requis:true},{nom:"nom",libelle:"Nom",requis:true},{nom:"description",libelle:"Description",requis:false},{nom:"role_base",libelle:"Droits de base",type:"select",options:[{valeur:"ADMIN",libelle:"Administrateur"},{valeur:"BIBLIOTHECAIRE",libelle:"Bibliothécaire"},{valeur:"ENSEIGNANT",libelle:"Enseignant"},{valeur:"LECTEUR",libelle:"Lecture seule"}]},{nom:"est_actif",libelle:"Actif",type:"checkbox"}]}/>}
