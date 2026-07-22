@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
-import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,25 +14,33 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+  const [accountExists, setAccountExists] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
-    const { error } = await authClient.requestPasswordReset({
-      email,
-      redirectTo: "/reinitialiser-mot-de-passe",
-    })
+    try {
+      const response = await fetch("/api/mot-de-passe-oublie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          redirectTo: "/reinitialiser-mot-de-passe",
+        }),
+      })
 
-    setLoading(false)
+      if (!response.ok) throw new Error()
 
-    if (error) {
-      setError(error.message ?? "Une erreur est survenue. Réessayez.")
-      return
+      const result = (await response.json()) as { compteExiste: boolean }
+      setAccountExists(result.compteExiste)
+      setSent(true)
+    } catch {
+      setError("Une erreur est survenue. Réessayez.")
+    } finally {
+      setLoading(false)
     }
-
-    setSent(true)
   }
 
   return (
@@ -60,13 +67,24 @@ export function ForgotPasswordForm() {
             </div>
             <div>
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Email envoyé
+                {accountExists
+                  ? "Compte trouvé — e-mail envoyé"
+                  : "Aucun compte trouvé"}
               </h2>
               <p className="text-sm text-muted-foreground mt-1 text-pretty">
-                Si un compte existe pour{" "}
-                <span className="font-medium text-foreground">{email}</span>,
-                vous recevrez un lien de réinitialisation. Pensez à vérifier vos
-                spams. Le lien expire dans 1 heure.
+                {accountExists ? (
+                  <>
+                    Un compte existe bien avec l’adresse e-mail{" "}
+                    <span className="font-medium text-foreground">{email}</span>.
+                    Consultez votre boîte e-mail et pensez à vérifier le dossier
+                    des spams. Le lien expire dans 1 heure.
+                  </>
+                ) : (
+                  <>
+                    Aucun compte n’existe avec l’adresse e-mail{" "}
+                    <span className="font-medium text-foreground">{email}</span>.
+                  </>
+                )}
               </p>
             </div>
             <Button

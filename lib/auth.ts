@@ -9,6 +9,7 @@ import { assertSignupAllowed } from "@/lib/signup-policy"
 
 const schemaAuth=process.env.DATABASE_SCHEMA??"eblon_bibliotheque"
 const authPool=new Pool({connectionString:process.env.DATABASE_URL,options:`-c search_path=${schemaAuth}`})
+export async function compteAuthExiste(email:string){const resultat=await authPool.query(`SELECT 1 FROM "${schemaAuth}"."user" WHERE lower(email)=lower($1) LIMIT 1`,[email]);return Boolean(resultat.rowCount)}
 function separerNom(nomComplet:string){const parties=nomComplet.trim().split(/\s+/).filter(Boolean);return{prenom:parties.shift()??"Utilisateur",nom:parties.join(" ")||"EBLON"}}
 
 export const auth=betterAuth({

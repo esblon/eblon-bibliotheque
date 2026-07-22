@@ -17,6 +17,7 @@ COPY . .
 RUN pnpm build
 
 FROM base AS migration
+RUN apk upgrade --no-cache
 ENV NODE_ENV=production
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -26,6 +27,7 @@ COPY scripts/migrate.ts scripts/verify-database.ts ./scripts/
 CMD ["sh","-c","pnpm db:migrate && pnpm db:verify"]
 
 FROM node:22.23.1-alpine3.23 AS runtime
+RUN apk upgrade --no-cache
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
