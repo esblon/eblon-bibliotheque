@@ -6,6 +6,7 @@ function deps(existant:{id:string;email:string}|null=null){return{trouverUtilisa
 describe("bootstrap administrateur",()=>{
  it("rejette les variables absentes",()=>expect(()=>lireBootstrapAdmin({})).toThrow())
  it("rejette un mot de passe trop court",()=>expect(()=>lireBootstrapAdmin({BOOTSTRAP_ADMIN_EMAIL:input.email,BOOTSTRAP_ADMIN_NAME:input.name,BOOTSTRAP_ADMIN_PASSWORD:"court"})).toThrow())
+ it("accepte un mot de passe temporaire de 11 caractères",()=>expect(lireBootstrapAdmin({BOOTSTRAP_ADMIN_EMAIL:input.email,BOOTSTRAP_ADMIN_NAME:input.name,BOOTSTRAP_ADMIN_PASSWORD:"temporaire1"}).password).toBe("temporaire1"))
  it("crée uniquement le compte ciblé",async()=>{const d=deps();await expect(executerBootstrapAdmin(input,d)).resolves.toMatchObject({created:true});expect(d.creerUtilisateur).toHaveBeenCalledOnce();expect(d.garantirAdministrateur).toHaveBeenCalledWith({id:"new-user",email:input.email},input.name)})
  it("est idempotent à la réexécution",async()=>{const user={id:"existing",email:input.email},d=deps(user);await executerBootstrapAdmin(input,d);await executerBootstrapAdmin(input,d);expect(d.creerUtilisateur).not.toHaveBeenCalled();expect(d.garantirAdministrateur).toHaveBeenCalledTimes(2)})
  it("garantit le rôle pour un utilisateur existant",async()=>{const d=deps({id:"existing",email:input.email});await expect(executerBootstrapAdmin(input,d)).resolves.toMatchObject({created:false});expect(d.garantirAdministrateur).toHaveBeenCalledOnce()})
