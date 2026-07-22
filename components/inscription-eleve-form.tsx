@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { authClient } from "@/lib/auth-client"
 import { completerInscriptionEleve } from "@/app/actions/parcours-auth"
 import { Button } from "@/components/ui/button"
@@ -9,9 +9,22 @@ import { Label } from "@/components/ui/label"
 import { classesPourNiveau, type EtablissementInscription, type NiveauInscription } from "@/lib/referentiels-inscription"
 
 export function InscriptionEleveForm({niveaux,etablissements}:{niveaux:NiveauInscription[];etablissements:EtablissementInscription[]}){
- const router=useRouter(),[pending,setPending]=useState(false),[erreur,setErreur]=useState(""),[niveauId,setNiveauId]=useState("")
+ const [pending,setPending]=useState(false),[erreur,setErreur]=useState(""),[succes,setSucces]=useState(false),[niveauId,setNiveauId]=useState("")
  const classes=classesPourNiveau(niveaux,niveauId)
- async function action(fd:FormData){setPending(true);setErreur("");const nomComplet=`${fd.get("prenom")} ${fd.get("nom")}`.trim(),email=String(fd.get("email")),password=String(fd.get("password"));const r=await authClient.signUp.email({name:nomComplet,email,password});if(r.error){setErreur(r.error.message??"Inscription impossible.");setPending(false);return}const profil=await completerInscriptionEleve({niveau_scolaire_id:String(fd.get("niveau_scolaire_id")),classe_scolaire_id:String(fd.get("classe_scolaire_id")),etablissement_id:String(fd.get("etablissement_id"))});if(!profil.succes){setErreur(profil.message);setPending(false);return}router.push("/espace-eleve");router.refresh()}
+ async function action(fd:FormData){
+  setPending(true);setErreur("")
+  try{
+   const nomComplet=`${fd.get("prenom")} ${fd.get("nom")}`.trim(),email=String(fd.get("email")),password=String(fd.get("password"))
+   const r=await authClient.signUp.email({name:nomComplet,email,password})
+   if(r.error){const message=r.error.message?.toLowerCase()??"";setErreur(r.error.status===422||message.includes("already exists")||message.includes("already use")?"Cette adresse email est déjà utilisée.":r.error.message??"Inscription impossible.");return}
+   const profil=await completerInscriptionEleve({niveau_scolaire_id:String(fd.get("niveau_scolaire_id")),classe_scolaire_id:String(fd.get("classe_scolaire_id")),etablissement_id:String(fd.get("etablissement_id"))})
+   if(!profil.succes){setErreur(profil.message);return}
+   await authClient.signOut()
+   setSucces(true)
+  }catch{setErreur("L’inscription n’a pas pu être finalisée. Réessayez.")}
+  finally{setPending(false)}
+ }
+ if(succes)return <div role="status" className="space-y-4 rounded-md border border-green-700/30 bg-green-50 p-4 text-sm text-green-900"><p>Votre compte élève a bien été créé. Vous pouvez maintenant vous connecter.</p><Button render={<Link href="/sign-in"/>}>Se connecter</Button></div>
  return <form action={action} className="grid gap-4 sm:grid-cols-2">
   <div><Label htmlFor="prenom">Prénom</Label><Input id="prenom" name="prenom" required/></div><div><Label htmlFor="nom">Nom</Label><Input id="nom" name="nom" required/></div>
   <div className="sm:col-span-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email"/></div>
