@@ -27,7 +27,30 @@ export async function listerRessources(nom: NomRessource, pagination: Pagination
   const tri = pagination.tri && config.tri.includes(pagination.tri) ? pagination.tri : config.tri[0]
   const total = await pool.query<{ total: number }>(`SELECT count(*)::int total FROM ${schema()}.${nom} ${where}`, valeurs)
   valeurs.push(pagination.limite, (pagination.page - 1) * pagination.limite)
-  const rows = await pool.query(`SELECT * FROM ${schema()}.${nom} ${where} ORDER BY ${tri} ${pagination.ordre === "desc" ? "DESC" : "ASC"} LIMIT $${valeurs.length - 1} OFFSET $${valeurs.length}`, valeurs)
+  let selection = "r.*", jointures = ""
+  if (nom === "ouvrages") {
+    selection += ",coalesce(s.nombre_total_exemplaires,0) nombre_total_exemplaires,coalesce(s.exemplaires_par_statut,'{}'::jsonb) exemplaires_par_statut"
+    jointures = `LEFT JOIN LATERAL (
+      SELECT coalesce(sum(x.total),0)::int nombre_total_exemplaires,
+        coalesce(jsonb_object_agg(x.statut,x.total),'{}'::jsonb) exemplaires_par_statut
+      FROM (SELECT statut,count(*)::int total FROM ${schema()}.exemplaires WHERE ouvrage_id=r.id GROUP BY statut) x
+    ) s ON true`
+  } else if (nom === "etablissements") {
+    selection += ",coalesce(el.nombre_total_eleves,0) nombre_total_eleves,coalesce(pr.nombre_total_emprunts,0) nombre_total_emprunts,coalesce(pr.emprunts_par_statut,'{}'::jsonb) emprunts_par_statut"
+    jointures = `LEFT JOIN LATERAL (
+      SELECT count(*)::int nombre_total_eleves FROM ${schema()}.emprunteurs WHERE etablissement_id=r.id
+    ) el ON true
+    LEFT JOIN LATERAL (
+      SELECT coalesce(sum(x.total),0)::int nombre_total_emprunts,
+        coalesce(jsonb_object_agg(x.statut,x.total),'{}'::jsonb) emprunts_par_statut
+      FROM (
+        SELECT p.statut,count(*)::int total FROM ${schema()}.emprunts p
+        JOIN ${schema()}.emprunteurs e ON e.id=p.emprunteur_id
+        WHERE e.etablissement_id=r.id GROUP BY p.statut
+      ) x
+    ) pr ON true`
+  }
+  const rows = await pool.query(`SELECT ${selection} FROM ${schema()}.${nom} r ${jointures} ${where} ORDER BY r.${tri} ${pagination.ordre === "desc" ? "DESC" : "ASC"} LIMIT $${valeurs.length - 1} OFFSET $${valeurs.length}`, valeurs)
   return { donnees: rows.rows, total: total.rows[0]?.total ?? 0 }
 }
 export async function trouverRessource(nom: NomRessource, id: string) { return (await pool.query(`SELECT * FROM ${schema()}.${nom} WHERE id=$1`, [id])).rows[0] }

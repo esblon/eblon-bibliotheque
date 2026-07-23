@@ -6,11 +6,13 @@ import { completerInscriptionEleve } from "@/app/actions/parcours-auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { classesPourNiveau, type EtablissementInscription, type NiveauInscription } from "@/lib/referentiels-inscription"
+import { classesPourNiveau, niveauxPourEtablissement, type EtablissementInscription, type NiveauInscription } from "@/lib/referentiels-inscription"
 
 export function InscriptionEleveForm({niveaux,etablissements}:{niveaux:NiveauInscription[];etablissements:EtablissementInscription[]}){
- const [pending,setPending]=useState(false),[erreur,setErreur]=useState(""),[succes,setSucces]=useState(false),[niveauId,setNiveauId]=useState("")
- const classes=classesPourNiveau(niveaux,niveauId)
+ const [pending,setPending]=useState(false),[erreur,setErreur]=useState(""),[succes,setSucces]=useState(false),[niveauId,setNiveauId]=useState(""),[etablissementId,setEtablissementId]=useState("")
+ const etablissement=etablissements.find(({id})=>id===etablissementId)
+ const niveauxDisponibles=niveauxPourEtablissement(niveaux,etablissement)
+ const classes=classesPourNiveau(niveauxDisponibles,niveauId)
  async function action(fd:FormData){
   setPending(true);setErreur("")
   try{
@@ -29,9 +31,9 @@ export function InscriptionEleveForm({niveaux,etablissements}:{niveaux:NiveauIns
   <div><Label htmlFor="prenom">Prénom</Label><Input id="prenom" name="prenom" required/></div><div><Label htmlFor="nom">Nom</Label><Input id="nom" name="nom" required/></div>
   <div className="sm:col-span-2"><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email"/></div>
   <div className="sm:col-span-2"><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" minLength={8} required autoComplete="new-password"/></div>
-  <div className="sm:col-span-2"><Label htmlFor="etablissement_id">Établissement</Label><select id="etablissement_id" name="etablissement_id" required defaultValue={etablissements[0]?.id??""} className="h-9 w-full rounded-md border bg-transparent px-3"><option value="" disabled>Sélectionner un établissement</option>{etablissements.map(e=><option key={e.id} value={e.id}>{e.nom}</option>)}</select></div>
-  <div><Label htmlFor="niveau_scolaire_id">Niveau scolaire</Label><select id="niveau_scolaire_id" name="niveau_scolaire_id" required value={niveauId} onChange={e=>setNiveauId(e.target.value)} className="h-9 w-full rounded-md border bg-transparent px-3"><option value="">Sélectionner un niveau</option>{niveaux.map(n=><option key={n.id} value={n.id}>{n.nom}</option>)}</select></div>
-  <div><Label htmlFor="classe_scolaire_id">Classe</Label><select key={niveauId} id="classe_scolaire_id" name="classe_scolaire_id" required disabled={!niveauId} defaultValue="" className="h-9 w-full rounded-md border bg-transparent px-3 disabled:opacity-50"><option value="">{niveauId?"Sélectionner une classe":"Choisir d’abord le niveau"}</option>{classes.map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}</select></div>
+  <div className="sm:col-span-2"><Label htmlFor="etablissement_id">Établissement</Label><select id="etablissement_id" name="etablissement_id" required value={etablissementId} onChange={e=>{setEtablissementId(e.target.value);setNiveauId("")}} className="h-9 w-full rounded-md border bg-transparent px-3"><option value="">Sélectionner un établissement</option>{etablissements.map(e=><option key={e.id} value={e.id}>{e.nom}</option>)}</select></div>
+  <div><Label htmlFor="niveau_scolaire_id">Niveau scolaire</Label><select id="niveau_scolaire_id" name="niveau_scolaire_id" required disabled={!etablissementId} value={niveauId} onChange={e=>setNiveauId(e.target.value)} className="h-9 w-full rounded-md border bg-transparent px-3 disabled:opacity-50"><option value="">{etablissementId?"Sélectionner un niveau":"Choisir d’abord l’établissement"}</option>{niveauxDisponibles.map(n=><option key={n.id} value={n.id}>{n.nom}</option>)}</select></div>
+  <div><Label htmlFor="classe_scolaire_id">Classe</Label><select key={`${etablissementId}-${niveauId}`} id="classe_scolaire_id" name="classe_scolaire_id" required disabled={!niveauId} defaultValue="" className="h-9 w-full rounded-md border bg-transparent px-3 disabled:opacity-50"><option value="">{niveauId?"Sélectionner une classe":"Choisir d’abord le niveau"}</option>{classes.map(c=><option key={c.id} value={c.id}>{c.nom}</option>)}</select></div>
   {erreur&&<p role="alert" className="text-sm text-destructive sm:col-span-2">{erreur}</p>}<Button type="submit" disabled={pending||!niveaux.length||!etablissements.length} className="sm:col-span-2">{pending?"Inscription…":"Créer mon compte élève"}</Button>
  </form>
 }
