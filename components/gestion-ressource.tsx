@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label"
 
 export type ChampGestion={nom:string;libelle:string;type?:"text"|"email"|"number"|"date"|"textarea"|"select"|"checkbox";options?:{valeur:string;libelle:string}[];requis?:boolean;cocheParDefaut?:boolean}
 type Ligne=Record<string,unknown>&{id:string}
+const LIBELLES_STATUTS:Record<string,string>={DISPONIBLE:"en stock",EMPRUNTE:"emprunté",EN_RETARD:"en retard",ACTIF:"en cours",RETOURNE:"retourné",PERDU:"perdu",ANNULE:"annulé",ABIME:"abîmé",RETIRE:"retiré",PREVU:"prévu",ACHETE:"acheté",A_ETIQUETER:"à étiqueter",ETIQUETE:"étiqueté"}
+const libelleStatut=(statut:string)=>LIBELLES_STATUTS[statut]??statut.replaceAll("_"," ").toLocaleLowerCase("fr-FR")
 
 export function GestionRessource({ressource,titre,lignes,champs,peutModifier=true}:{ressource:RessourceEditable;titre:string;lignes:Ligne[];champs:ChampGestion[];peutModifier?:boolean}){
   const [recherche,setRecherche]=useState("")
@@ -61,6 +63,18 @@ export function GestionRessource({ressource,titre,lignes,champs,peutModifier=tru
         <div className="flex gap-2 md:col-span-2"><Button type="submit" disabled={pending}>{pending?"Enregistrement…":"Enregistrer"}</Button><Button type="button" variant="outline" disabled={pending} onClick={()=>setOuvert(false)}>Annuler</Button></div>
       </form>
     </CardContent></Card>}
-    {filtrees.length===0?<Card><CardContent className="py-10 text-center text-muted-foreground">Aucune donnée ne correspond à votre recherche.</CardContent></Card>:<div className="grid gap-3">{filtrees.map(ligne=><Card key={ligne.id}><CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{String(ligne.titre??(ligne.prenom?`${ligne.prenom} ${ligne.nom??""}`:ligne.nom??"Sans nom"))}</p><p className="text-sm text-muted-foreground">{String(ligne.code??ligne.email??ligne.code_inventaire??ligne.numero_emprunteur??"")}</p></div>{peutModifier&&<div className="flex gap-2">{ressource==="agents"&&!ligne.identifiant_auth_externe&&<Button type="button" size="sm" disabled={pending} onClick={()=>inviter(ligne.id)}>Envoyer l’invitation</Button>}<Button type="button" size="sm" variant="outline" onClick={()=>ouvrirEdition(ligne)}>Modifier</Button></div>}</CardContent></Card>)}</div>}
+    {filtrees.length===0?<Card><CardContent className="py-10 text-center text-muted-foreground">Aucune donnée ne correspond à votre recherche.</CardContent></Card>:<div className="grid gap-3">{filtrees.map(ligne=><Card key={ligne.id}><CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{String(ligne.titre??(ligne.prenom?`${ligne.prenom} ${ligne.nom??""}`:ligne.nom??"Sans nom"))}</p><p className="text-sm text-muted-foreground">{String(ligne.code??ligne.email??ligne.code_inventaire??ligne.numero_emprunteur??"")}</p><StatistiquesRessource ressource={ressource} ligne={ligne}/></div>{peutModifier&&<div className="flex gap-2">{ressource==="agents"&&!ligne.identifiant_auth_externe&&<Button type="button" size="sm" disabled={pending} onClick={()=>inviter(ligne.id)}>Envoyer l’invitation</Button>}<Button type="button" size="sm" variant="outline" onClick={()=>ouvrirEdition(ligne)}>Modifier</Button></div>}</CardContent></Card>)}</div>}
   </div>
+}
+
+function StatistiquesRessource({ressource,ligne}:{ressource:RessourceEditable;ligne:Ligne}){
+  if(ressource==="ouvrages"){
+    const repartition=(ligne.exemplaires_par_statut??{}) as Record<string,number>
+    return <p className="mt-2 text-sm"><strong>{Number(ligne.nombre_total_exemplaires??0)}</strong> exemplaire(s){Object.entries(repartition).map(([statut,total])=><span key={statut}> · {libelleStatut(statut)} : <strong>{total}</strong></span>)}</p>
+  }
+  if(ressource==="etablissements"){
+    const repartition=(ligne.emprunts_par_statut??{}) as Record<string,number>
+    return <p className="mt-2 text-sm"><strong>{Number(ligne.nombre_total_eleves??0)}</strong> élève(s) · <strong>{Number(ligne.nombre_total_emprunts??0)}</strong> emprunt(s){Object.entries(repartition).map(([statut,total])=><span key={statut}> · {libelleStatut(statut)} : <strong>{total}</strong></span>)}</p>
+  }
+  return null
 }
