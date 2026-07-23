@@ -1,4 +1,4 @@
-export type MetaPagination = { page: number; limite: number; total: number; pages: number }
+export type MetaPagination = { page: number; limite: number; total: number; nombre_pages: number }
 
 export type ReponseApi<T> = { donnees: T; meta: Partial<MetaPagination> }
 export type ErreurApiPayload = { erreur: { code: string; message: string; details?: unknown } }

@@ -14,7 +14,7 @@ export const configurations: Record<NomRessource, Configuration> = {
   roles_agents: { recherche: ["code","nom","description"], tri: ["code","nom"], filtres: ["est_actif"] },
   ouvrages: { recherche: ["titre","isbn"], tri: ["titre","annee_publication","date_creation"], filtres: ["matiere_id","niveau_scolaire_id","type_ouvrage_id","au_programme_scolaire","isbn","est_actif"] },
   exemplaires: { recherche: ["code_inventaire","code_qr"], tri: ["code_inventaire","statut","date_creation"], filtres: ["ouvrage_id","code_inventaire","code_qr","statut"] },
-  emprunteurs: { recherche: ["numero_emprunteur","nom","prenom","classe","etablissement"], tri: ["nom","prenom","numero_emprunteur","date_creation"], filtres: ["numero_emprunteur","nom","prenom","classe","etablissement","niveau_scolaire_id","statut"] },
+  emprunteurs: { recherche: ["numero_emprunteur","nom","prenom","email","classe","etablissement"], tri: ["date_creation","nom","prenom","numero_emprunteur"], filtres: ["numero_emprunteur","nom","prenom","classe","etablissement","niveau_scolaire_id","statut"] },
   agents: { recherche: ["nom","prenom","email"], tri: ["nom","prenom","email","date_creation"], filtres: ["role","statut"] },
 }
 const schema = () => `"${parseServerEnvironment().DATABASE_SCHEMA}"`

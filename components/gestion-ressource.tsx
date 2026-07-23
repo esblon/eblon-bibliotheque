@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Link from "next/link"
 import { toast } from "sonner"
 import { enregistrerRessource, envoyerInvitationAgent, type EtatAction } from "@/app/actions/frontend-api"
 import type { RessourceEditable } from "@/lib/frontend-api/validation"
@@ -14,7 +15,9 @@ type Ligne=Record<string,unknown>&{id:string}
 const LIBELLES_STATUTS:Record<string,string>={DISPONIBLE:"en stock",EMPRUNTE:"emprunté",EN_RETARD:"en retard",ACTIF:"en cours",RETOURNE:"retourné",PERDU:"perdu",ANNULE:"annulé",ABIME:"abîmé",RETIRE:"retiré",PREVU:"prévu",ACHETE:"acheté",A_ETIQUETER:"à étiqueter",ETIQUETE:"étiqueté"}
 const libelleStatut=(statut:string)=>LIBELLES_STATUTS[statut]??statut.replaceAll("_"," ").toLocaleLowerCase("fr-FR")
 
-export function GestionRessource({ressource,titre,lignes,champs,peutModifier=true}:{ressource:RessourceEditable;titre:string;lignes:Ligne[];champs:ChampGestion[];peutModifier?:boolean}){
+type PaginationGestion={page:number;limite:number;total:number;nombrePages:number;baseUrl:string}
+
+export function GestionRessource({ressource,titre,lignes,champs,peutModifier=true,pagination}:{ressource:RessourceEditable;titre:string;lignes:Ligne[];champs:ChampGestion[];peutModifier?:boolean;pagination?:PaginationGestion}){
   const [recherche,setRecherche]=useState("")
   const [edition,setEdition]=useState<Ligne|null>(null)
   const [ouvert,setOuvert]=useState(false)
@@ -64,6 +67,13 @@ export function GestionRessource({ressource,titre,lignes,champs,peutModifier=tru
       </form>
     </CardContent></Card>}
     {filtrees.length===0?<Card><CardContent className="py-10 text-center text-muted-foreground">Aucune donnée ne correspond à votre recherche.</CardContent></Card>:<div className="grid gap-3">{filtrees.map(ligne=><Card key={ligne.id}><CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{String(ligne.titre??(ligne.prenom?`${ligne.prenom} ${ligne.nom??""}`:ligne.nom??"Sans nom"))}</p><p className="text-sm text-muted-foreground">{String(ligne.code??ligne.email??ligne.code_inventaire??ligne.numero_emprunteur??"")}</p><StatistiquesRessource ressource={ressource} ligne={ligne}/></div>{peutModifier&&<div className="flex gap-2">{ressource==="agents"&&!ligne.identifiant_auth_externe&&<Button type="button" size="sm" disabled={pending} onClick={()=>inviter(ligne.id)}>Envoyer l’invitation</Button>}<Button type="button" size="sm" variant="outline" onClick={()=>ouvrirEdition(ligne)}>Modifier</Button></div>}</CardContent></Card>)}</div>}
+    {pagination&&<nav aria-label={`Pagination ${titre}`} className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+      <p>{pagination.total} entrée(s) · page {pagination.page} sur {Math.max(1,pagination.nombrePages)}</p>
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" disabled={pagination.page<=1} render={pagination.page>1?<Link href={`${pagination.baseUrl}?page=${pagination.page-1}`}/>:undefined}>Précédent</Button>
+        <Button variant="outline" size="sm" disabled={pagination.page>=pagination.nombrePages} render={pagination.page<pagination.nombrePages?<Link href={`${pagination.baseUrl}?page=${pagination.page+1}`}/>:undefined}>Suivant</Button>
+      </div>
+    </nav>}
   </div>
 }
 
