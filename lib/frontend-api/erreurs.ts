@@ -20,5 +20,6 @@ export async function convertirErreur(reponse: Response): Promise<ErreurClientAp
 }
 
 export function messageErreur(error: unknown) {
-  return error instanceof ErreurClientApi ? error.message : "Impossible de joindre le service. Vérifiez que l’application est démarrée."
+  if (error instanceof ErreurClientApi || (error instanceof Error && error.name === "ErreurEnvoiEmail")) return error.message
+  return "Impossible de joindre le service. Vérifiez que l’application est démarrée."
 }

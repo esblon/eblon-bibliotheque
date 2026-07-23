@@ -17,7 +17,12 @@ export async function inviterAgent(agent:{id:string;email:string;prenom:string})
   await client.query("COMMIT")
  }catch(e){await client.query("ROLLBACK");throw e}finally{client.release()}
  const base=process.env.BETTER_AUTH_URL??"http://localhost:3000"
- await sendAgentInvitationEmail(agent.email,agent.prenom,`${base}/activation-agent?jeton=${encodeURIComponent(jeton)}`)
+ try{
+  await sendAgentInvitationEmail(agent.email,agent.prenom,`${base}/activation-agent?jeton=${encodeURIComponent(jeton)}`)
+ }catch(e){
+  await pool.query(`DELETE FROM ${schema()}.invitations_agents WHERE empreinte_jeton=$1 AND date_envoi IS NULL`,[empreinte(jeton)])
+  throw e
+ }
  await pool.query(`UPDATE ${schema()}.invitations_agents SET date_envoi=current_timestamp WHERE empreinte_jeton=$1`,[empreinte(jeton)])
 }
 

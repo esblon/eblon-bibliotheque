@@ -30,7 +30,7 @@ export function GestionRessource({ressource,titre,lignes,champs,peutModifier=tru
     try{
       const reponse=await enregistrerRessource(ressource,edition?.id??null,valeurs)
       setResultat(reponse)
-      if(reponse.succes){toast.success(reponse.message);setOuvert(false);setEdition(null)}
+      if(reponse.succes){if(reponse.avertissement)toast.warning(reponse.message);else toast.success(reponse.message);setOuvert(false);setEdition(null)}
       else toast.error(reponse.message)
     }catch{
       const reponse={succes:false,message:"L’enregistrement a échoué. Réessayez."}
@@ -43,7 +43,7 @@ export function GestionRessource({ressource,titre,lignes,champs,peutModifier=tru
 
   return <div className="space-y-5">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="text-2xl font-semibold">{titre}</h1><p className="text-sm text-muted-foreground">Données synchronisées avec l’API métier.</p></div>{peutModifier&&<Button type="button" onClick={()=>ouvrirEdition(null)}>Créer</Button>}</div>
-    {resultat&&<p role={resultat.succes?"status":"alert"} aria-live="polite" className={resultat.succes?"rounded-md bg-green-50 p-3 text-sm text-green-800":"rounded-md bg-destructive/10 p-3 text-sm text-destructive"}>{resultat.message}</p>}
+    {resultat&&<p role={resultat.succes?"status":"alert"} aria-live="polite" className={resultat.avertissement?"rounded-md bg-amber-50 p-3 text-sm text-amber-900":resultat.succes?"rounded-md bg-green-50 p-3 text-sm text-green-800":"rounded-md bg-destructive/10 p-3 text-sm text-destructive"}>{resultat.message}</p>}
     <Label htmlFor={`${ressource}-recherche`} className="sr-only">Rechercher</Label><Input id={`${ressource}-recherche`} placeholder="Rechercher…" value={recherche} onChange={e=>setRecherche(e.target.value)} className="max-w-md"/>
     {ouvert&&<Card><CardHeader><CardTitle>{edition?"Modifier":"Créer"}</CardTitle></CardHeader><CardContent>
       <form action={soumettre} className="grid gap-4 md:grid-cols-2">
