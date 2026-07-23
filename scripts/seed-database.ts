@@ -39,28 +39,31 @@ async function main() {
 
       INSERT INTO ${schema}.ouvrages (
         id, titre, sous_titre, editeur, edition, annee_publication,
-        description, matiere_id, niveau_scolaire_id
+        description, matiere_id, niveau_scolaire_id, type_ouvrage_id, au_programme_scolaire
       ) VALUES
         (
           '30000000-0000-4000-8000-000000000001',
           'Annales de mathématiques 3e', NULL, 'Éditions Démo', '2026', 2026,
           'Ouvrage fictif pour le développement local.',
           '10000000-0000-4000-8000-000000000001',
-          '20000000-0000-4000-8000-000000000001'
+          '20000000-0000-4000-8000-000000000001',
+          '25000000-0000-4000-8000-000000000001', true
         ),
         (
           '30000000-0000-4000-8000-000000000002',
           'Préparation au français Terminale', NULL, 'Éditions Démo', '2026', 2026,
           'Ouvrage fictif pour le développement local.',
           '10000000-0000-4000-8000-000000000002',
-          '20000000-0000-4000-8000-000000000002'
+          '20000000-0000-4000-8000-000000000002',
+          '25000000-0000-4000-8000-000000000003', true
         ),
         (
           '30000000-0000-4000-8000-000000000003',
           'Sciences physiques Terminale C', NULL, 'Éditions Démo', '2026', 2026,
           'Ouvrage fictif pour le développement local.',
           '10000000-0000-4000-8000-000000000004',
-          '20000000-0000-4000-8000-000000000003'
+          '20000000-0000-4000-8000-000000000003',
+          '25000000-0000-4000-8000-000000000002', true
         )
       ON CONFLICT (id) DO UPDATE SET
         titre = EXCLUDED.titre,
@@ -70,6 +73,8 @@ async function main() {
         description = EXCLUDED.description,
         matiere_id = EXCLUDED.matiere_id,
         niveau_scolaire_id = EXCLUDED.niveau_scolaire_id,
+        type_ouvrage_id = EXCLUDED.type_ouvrage_id,
+        au_programme_scolaire = EXCLUDED.au_programme_scolaire,
         est_actif = true,
         date_modification = current_timestamp;
 
@@ -146,16 +151,18 @@ async function main() {
         await client.query(`
           INSERT INTO ${schema}.ouvrages (
             id, titre, sous_titre, editeur, edition, annee_publication,
-            description, matiere_id, niveau_scolaire_id, est_actif
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true)
+            description, matiere_id, niveau_scolaire_id, type_ouvrage_id, au_programme_scolaire, est_actif
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'25000000-0000-4000-8000-000000000002',$10,true)
           ON CONFLICT (id) DO UPDATE SET
             titre=EXCLUDED.titre, sous_titre=EXCLUDED.sous_titre,
             editeur=EXCLUDED.editeur, edition=EXCLUDED.edition,
             annee_publication=EXCLUDED.annee_publication,
             description=EXCLUDED.description, matiere_id=EXCLUDED.matiere_id,
-            niveau_scolaire_id=EXCLUDED.niveau_scolaire_id, est_actif=true,
+            niveau_scolaire_id=EXCLUDED.niveau_scolaire_id,
+            type_ouvrage_id=EXCLUDED.type_ouvrage_id,
+            au_programme_scolaire=EXCLUDED.au_programme_scolaire, est_actif=true,
             date_modification=current_timestamp
-        `, [id, `${collections[indexOuvrage]} — ${matiere.nom}`, niveau?.nom??"Tous niveaux", "Éditions Ivoire Savoir", "Développement 2026", 2026, "Ouvrage entièrement fictif destiné au développement local.", matiere.id, niveau?.id??null])
+        `, [id, `${collections[indexOuvrage]} — ${matiere.nom}`, niveau?.nom??"Tous niveaux", "Éditions Ivoire Savoir", "Développement 2026", 2026, "Ouvrage entièrement fictif destiné au développement local.", matiere.id, niveau?.id??null, niveau !== null])
 
         const exemplaireId = `41000000-0000-4000-8000-${String(numero).padStart(12, "0")}`
         const codeInventaire = `DEV-GEN-${matiere.code}-${String(indexOuvrage + 1).padStart(3, "0")}`

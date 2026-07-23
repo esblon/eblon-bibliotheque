@@ -6,6 +6,7 @@ export const apiFrontend = {
   niveaux: (p?:ParametresListe) => appelerApi<NiveauScolaire[]>("/api/v1/niveaux-scolaires",{},p),
   classes: (p?:ParametresListe) => appelerApi<Array<{id:string;[key:string]:unknown}>>("/api/v1/classes-scolaires",{},p),
   etablissements: (p?:ParametresListe) => appelerApi<Array<{id:string;[key:string]:unknown}>>("/api/v1/etablissements",{},p),
+  typesOuvrages: (p?:ParametresListe) => appelerApi<Array<{id:string;code:string;nom:string;description?:string;est_actif:boolean}>>("/api/v1/types-ouvrages",{},p),
   roles: (p?:ParametresListe) => appelerApi<Array<{id:string;[key:string]:unknown}>>("/api/v1/roles",{},p),
   ouvrages: (p?:ParametresListe) => appelerApi<Ouvrage[]>("/api/v1/ouvrages",{},p),
   exemplaires: (p?:ParametresListe) => appelerApi<Exemplaire[]>("/api/v1/exemplaires",{},p),

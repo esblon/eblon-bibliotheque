@@ -4,7 +4,7 @@ import { parseServerEnvironment } from "../config/env"
 const TABLES_METIER = [
   "matieres", "niveaux_scolaires", "ouvrages", "exemplaires",
   "emprunteurs", "agents", "emprunts", "evenements_emprunt",
-  "classes_scolaires", "etablissements", "roles_agents",
+  "classes_scolaires", "etablissements", "roles_agents", "types_ouvrages",
 ] as const
 const ANCIENNES_TABLES = [
   "subjects", "education_levels", "books", "book_copies",
@@ -47,8 +47,8 @@ async function main() {
     const migrations = await client.query<{ name: string; occurrences: number }>(
       `SELECT name, count(*)::int AS occurrences FROM ${schema}.migrations_eblon_bibliotheque GROUP BY name ORDER BY name`,
     )
-    if (migrations.rows.length !== 10 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
-        migrations.rows.at(-1)?.name !== "000010_referentiels_uat_005") {
+    if (migrations.rows.length !== 11 || migrations.rows.some(({ occurrences }) => occurrences !== 1) ||
+        migrations.rows.at(-1)?.name !== "000011_types_ouvrages_statuts_etablissements") {
       throw new Error("Historique des migrations incohérent")
     }
 
@@ -95,6 +95,7 @@ async function main() {
       SELECT count(*)::int AS count FROM ${schema}.exemplaires e LEFT JOIN ${schema}.ouvrages o ON o.id=e.ouvrage_id WHERE o.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.matieres m ON m.id=o.matiere_id WHERE m.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.niveaux_scolaires n ON n.id=o.niveau_scolaire_id WHERE o.niveau_scolaire_id IS NOT NULL AND n.id IS NULL
+      UNION ALL SELECT count(*)::int FROM ${schema}.ouvrages o LEFT JOIN ${schema}.types_ouvrages t ON t.id=o.type_ouvrage_id WHERE t.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.classes_scolaires c LEFT JOIN ${schema}.niveaux_scolaires n ON n.id=c.niveau_scolaire_id WHERE n.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.emprunteurs e LEFT JOIN ${schema}.classes_scolaires c ON c.id=e.classe_scolaire_id WHERE e.classe_scolaire_id IS NOT NULL AND c.id IS NULL
       UNION ALL SELECT count(*)::int FROM ${schema}.emprunteurs e LEFT JOIN ${schema}.etablissements t ON t.id=e.etablissement_id WHERE e.etablissement_id IS NOT NULL AND t.id IS NULL`)
@@ -105,7 +106,7 @@ async function main() {
       [[...TABLES_METIER, ...ANCIENNES_TABLES, "user", "session", "account", "verification"]],
     )
     if (publicTables.rowCount) throw new Error("Tables métier présentes dans public")
-    console.log(`Vérification PostgreSQL: OK (modèle français, authentification, 10 migrations uniques, relations intactes${process.env.NODE_ENV === "production" ? ", référentiels d’inscription présents" : ", seed local cohérent"})`)
+    console.log(`Vérification PostgreSQL: OK (modèle français, authentification, 11 migrations uniques, relations intactes${process.env.NODE_ENV === "production" ? ", référentiels d’inscription présents" : ", seed local cohérent"})`)
   } finally {
     await client.end()
   }
