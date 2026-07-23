@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export type ChampGestion={nom:string;libelle:string;type?:"text"|"email"|"number"|"date"|"textarea"|"select"|"checkbox";options?:{valeur:string;libelle:string}[];requis?:boolean}
+export type ChampGestion={nom:string;libelle:string;type?:"text"|"email"|"number"|"date"|"textarea"|"select"|"checkbox";options?:{valeur:string;libelle:string}[];requis?:boolean;cocheParDefaut?:boolean}
 type Ligne=Record<string,unknown>&{id:string}
 
 export function GestionRessource({ressource,titre,lignes,champs,peutModifier=true}:{ressource:RessourceEditable;titre:string;lignes:Ligne[];champs:ChampGestion[];peutModifier?:boolean}){
@@ -48,7 +48,7 @@ export function GestionRessource({ressource,titre,lignes,champs,peutModifier=tru
         {champs.map(champ=><div key={champ.nom} className={champ.type==="textarea"?"md:col-span-2":""}>
           <Label htmlFor={champ.nom}>{champ.libelle}</Label>
           {champ.type==="select"?<select id={champ.nom} name={champ.nom} required={champ.requis!==false} defaultValue={String(edition?.[champ.nom]??champ.options?.[0]?.valeur??"")} className="h-9 w-full rounded-md border bg-transparent px-3 text-sm">{champ.options?.map(option=><option key={option.valeur} value={option.valeur}>{option.libelle}</option>)}</select>
-          :champ.type==="checkbox"?<input id={champ.nom} name={champ.nom} type="checkbox" defaultChecked={edition?Boolean(edition[champ.nom]):true} className="ml-3 size-4"/>
+          :champ.type==="checkbox"?<input id={champ.nom} name={champ.nom} type="checkbox" defaultChecked={edition?Boolean(edition[champ.nom]):(champ.cocheParDefaut??true)} className="ml-3 size-4"/>
           :<Input
             id={champ.nom}
             name={champ.nom}

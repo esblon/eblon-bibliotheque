@@ -33,7 +33,7 @@ async function creerDonneesTest(): Promise<DonneesTest> {
     [values.niveauId, `TEST-${values.niveauId}`],
   )
   await client.query(
-    `INSERT INTO ${schema}.ouvrages (id, titre, matiere_id, niveau_scolaire_id) VALUES ($1, 'Ouvrage test', $2, $3)`,
+    `INSERT INTO ${schema}.ouvrages (id, titre, matiere_id, niveau_scolaire_id, type_ouvrage_id) VALUES ($1, 'Ouvrage test', $2, $3, '25000000-0000-4000-8000-000000000008')`,
     [values.ouvrageId, values.matiereId, values.niveauId],
   )
   await client.query(
@@ -78,7 +78,7 @@ describe.sequential("PostgreSQL domain model", () => {
   })
 
   it("expose uniquement les tables métier françaises", async () => {
-    const attendues = ["matieres", "niveaux_scolaires", "classes_scolaires", "etablissements", "roles_agents", "ouvrages", "exemplaires", "emprunteurs", "agents", "emprunts", "evenements_emprunt"]
+    const attendues = ["matieres", "niveaux_scolaires", "classes_scolaires", "etablissements", "roles_agents", "types_ouvrages", "ouvrages", "exemplaires", "emprunteurs", "agents", "emprunts", "evenements_emprunt"]
     const anciennes = ["subjects", "education_levels", "books", "book_copies", "borrowers", "staff_members", "loans", "loan_events"]
     const result = await client.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_name = ANY($2::text[])`,
@@ -101,8 +101,8 @@ describe.sequential("PostgreSQL domain model", () => {
   it("creates a book", async () => {
     const id = randomUUID()
     const result = await client.query<{ id: string }>(
-      `INSERT INTO ${schema}.ouvrages (id, titre, matiere_id, niveau_scolaire_id)
-       VALUES ($1, 'Autre ouvrage test', $2, $3) RETURNING id`,
+      `INSERT INTO ${schema}.ouvrages (id, titre, matiere_id, niveau_scolaire_id, type_ouvrage_id)
+       VALUES ($1, 'Autre ouvrage test', $2, $3, '25000000-0000-4000-8000-000000000008') RETURNING id`,
       [id, donnees.matiereId, donnees.niveauId],
     )
     expect(result.rows[0]?.id).toBe(id)

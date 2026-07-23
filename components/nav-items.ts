@@ -7,6 +7,7 @@ export const NAV_ITEMS:NavItem[]=[
  {href:"/classes-scolaires",label:"Classes",icon:GraduationCap},
  {href:"/etablissements",label:"Établissements",icon:Building2},
  {href:"/ouvrages",label:"Ouvrages",icon:BookOpen},
+ {href:"/types-ouvrages",label:"Types d’ouvrages",icon:Tags},
  {href:"/exemplaires",label:"Exemplaires",icon:BookCopy},
  {href:"/emprunteurs",label:"Emprunteurs",icon:UsersRound},
  {href:"/agents",label:"Agents",icon:UserCog},
